@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin name="benthosdc-smart" library="smart" version="1.0">
+	<driver name="smart">
+		<description>Device Driver for Uwatec Smart devices</description>
+		<interface>irda</interface>
+		<parameters>
+			<parameter name="chunk_size" type="int">IrDA transfer chunk size, between 2 and 32 bytes.  Default is 4.</parameter>
+			<parameter name="lsap" type="int">IrDA Link Service Access Point identifier.  Default is 1.</parameter>
+			<parameter name="timeout" type="int">IrDA Timeout, in milliseconds.  A value less than 0 indicates blocking I/O.  Default is 2000.</parameter>
+		</parameters>
+		<models manufacturer="Uwatec">
+			<model id="16">Smart Pro</model>
+			<model id="17">Galileo Sol</model>
+			<model id="18">Aladin Tec</model>
+			<model id="19">Aladin Tec 2G</model>
+			<model id="20">Smart Com</model>
+			<model id="24">Smart Tec</model>
+			<model id="28">Smart Z</model>
+		</models>
+	</driver>
+</plugin>

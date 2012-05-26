@@ -1,0 +1,23 @@
+benthos_dc : Benthos Dive Computer Interface Library
+----------------------------------------------------
+
+Author: Jonathan Krauss
+E-Mail: jkrauss@asymworks.com
+
+This library provides a plugin-based interface to dive computers and allows
+for transfer of dive data and control of the dive computer using device-specific
+backend driver plugins.
+
+The core library provides the basic interfaces that plugins must implement as
+well as the plugin registry and load/unload functionality.  The library includes
+several device plugins and also supports third-party plugins.
+
+Current driver plugins included with benthos_dc are:
+- smart: Uwatec Smart device driver
+
+This code is released under a GPL license to be compatible with libdivecomputer.
+
+BUILD DEPENDENCIES
+------------------
+boost (filesystem, regex)
+libxml2
