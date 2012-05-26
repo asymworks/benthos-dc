@@ -59,6 +59,9 @@ class Driver;
 class DriverClass
 {
 public:
+	typedef boost::shared_ptr<DriverClass>	Ptr;
+
+public:
 
 	/**
 	 * @brief Class Constructor

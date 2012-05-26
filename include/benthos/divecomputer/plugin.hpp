@@ -54,6 +54,9 @@ namespace benthos
 class Plugin
 {
 public:
+	typedef boost::shared_ptr<Plugin>	Ptr;
+
+public:
 
 	/**
 	 * @brief Class Constructor
