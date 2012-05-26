@@ -3,9 +3,9 @@ exec_prefix=@CMAKE_INSTALL_PREFIX@
 libdir=@CMAKE_INSTALL_PREFIX@/lib
 includedir=@CMAKE_INSTALL_PREFIX@/include
 
-Name: benthosdc
+Name: benthos-dc
 Description: Benthos Dive Computer Interface Library
 Requires: 
 Version: @BENTHOS_DC_VERSION@
-Libs: -L${libdir} -lbenthosdc
+Libs: -L${libdir} -lbenthos-dc
 Cflags: -std=c++0x -I${includedir}

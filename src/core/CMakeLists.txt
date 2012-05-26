@@ -58,13 +58,13 @@ configure_file(
 )
 
 configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/benthosdc.pc.in
-	${CMAKE_CURRENT_BINARY_DIR}/benthosdc.pc
+	${CMAKE_CURRENT_SOURCE_DIR}/benthos-dc.pc.in
+	${CMAKE_CURRENT_BINARY_DIR}/benthos-dc.pc
 	@ONLY
 )
 
 # Build the Benthos Dive Computer Library
-add_library(benthosdc SHARED
+add_library(benthos-dc SHARED
 	driver.cpp
 	driverclass.cpp
 	manifest_parser.cpp
@@ -73,13 +73,13 @@ add_library(benthosdc SHARED
 )
 
 # Link the Benthos Dive Computer Library
-target_link_libraries(benthosdc
+target_link_libraries(benthos-dc
 	${Boost_LIBRARIES}
 	${LIBXML2_LIBRARIES}
 )
 
 # Package the Benthos Dive Computer Library
-install(TARGETS benthosdc
+install(TARGETS benthos-dc
 	LIBRARY DESTINATION ${BENTHOS_DC_LIBDIR}
 	ARCHIVE DESTINATION ${BENTHOS_DC_LIBDIR}/static
 )
@@ -88,4 +88,4 @@ install(TARGETS benthosdc
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include
 	PATTERN "*.in" EXCLUDE)
 install(FILES ${CMAKE_BINARY_DIR}/include/benthos/divecomputer/config.hpp DESTINATION include/benthos/divecomputer)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/benthosdc.pc DESTINATION lib/pkgconfig)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/benthos-dc.pc DESTINATION lib/pkgconfig)
