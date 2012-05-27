@@ -226,6 +226,9 @@ public:
 	 */
 	PluginPtr loadPlugin(const std::string & name);
 
+	//! @return List of Installed Plugins
+	const std::list<plugin_manifest_t> & plugins() const;
+
 protected:
 
 	/**

@@ -31,19 +31,37 @@
 # WITH THE SOFTWARE.
 #
 
-# Setup Include Directories
+# Enable Warnings, C++0x, etc.
+add_definitions( -std=c++0x -Wall -g )
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON) 
+set(Boost_USE_STATIC_RUNTIME OFF)
+
+# Boost Headers Required
+find_package( Boost 1.45 REQUIRED COMPONENTS filesystem program_options system )
+
+# LibXML2 Required
+find_package( LibXml2 2.7 REQUIRED )
+
+# Include Paths
 include_directories(
-	${CMAKE_SOURCE_DIR}/include
-	${CMAKE_SOURCE_DIR}/src
-	${CMAKE_BINARY_DIR}/include
+	${Boost_INCLUDE_DIR},
+	${LIBXML2_INCLUDE_DIR}
 )
 
-# Build the common objects and core
-add_subdirectory(common)
-add_subdirectory(core)
+# Build Transfer Application
+add_executable( benthos-xfr 
+	main.cpp
+)
 
-# Build the plugins
-add_subdirectory(plugins)
+target_link_libraries( benthos-xfr 
+	${Boost_LIBRARIES}
+	${LIBXML2_LIBRARIES}
+	benthos-dc
+)
 
-# Build the transfer application
-add_subdirectory(transferapp)
+# Install Transfer Application
+install(TARGETS benthos-xfr
+	DESTINATION bin
+)

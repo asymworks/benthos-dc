@@ -182,8 +182,6 @@ void PluginRegistry::loadManifest(const std::string & path)
 
 		// Add the Plugin Information
 		m_plugins.push_back(m);
-
-		printf("Registered Plugin %s\n", m.plugin_name.c_str());
 	}
 	catch (std::exception & e)
 	{
@@ -213,4 +211,9 @@ void PluginRegistry::scanManifestPath(const std::string & path)
 			}
 		}
 	}
+}
+
+const std::list<plugin_manifest_t> & PluginRegistry::plugins() const
+{
+	return m_plugins;
 }
