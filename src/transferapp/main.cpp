@@ -62,7 +62,7 @@
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
-using namespace benthos;
+using namespace benthos::dc;
 
 typedef std::vector<uint8_t>		dive_buffer_t;
 typedef std::list<dive_buffer_t>	dive_data_t;

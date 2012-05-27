@@ -32,7 +32,7 @@
 #include <benthos/divecomputer/driverclass.hpp>
 #include <benthos/divecomputer/registry.hpp>
 
-using namespace benthos;
+using namespace benthos::dc;
 
 DriverClass::DriverClass(const driver_manifest_t * manifest, const driver_interface_t * table)
 	: m_manifest(manifest), m_table(table)

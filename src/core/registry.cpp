@@ -37,7 +37,7 @@
 
 #include "manifest_parser.hpp"
 
-using namespace benthos;
+using namespace benthos::dc;
 
 PluginRegistry::Ptr PluginRegistry::s_instance;
 PluginRegistry::Ptr PluginRegistry::Instance()

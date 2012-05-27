@@ -42,7 +42,7 @@
 #include <benthos/divecomputer/plugin/plugin.h>
 #include <benthos/divecomputer/registry.hpp>
 
-namespace benthos
+namespace benthos { namespace dc
 {
 
 /**
@@ -115,6 +115,6 @@ private:
 
 };
 
-} /* benthos */
+} } /* benthos::dc */
 
 #endif /* BENTHOS_DC_PLUGIN_HPP_ */

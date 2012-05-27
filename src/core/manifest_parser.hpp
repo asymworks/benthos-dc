@@ -40,7 +40,7 @@
 #include <string>
 #include <benthos/divecomputer/registry.hpp>
 
-using namespace benthos;
+using namespace benthos::dc;
 
 /**
  * @brief Parse a Manifest File

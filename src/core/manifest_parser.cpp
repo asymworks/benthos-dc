@@ -37,7 +37,7 @@
 
 #include "manifest_parser.hpp"
 
-using namespace benthos;
+using namespace benthos::dc;
 
 void parseDriverName(xmlAttr * attr, driver_manifest_t & m)
 {

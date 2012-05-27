@@ -34,7 +34,7 @@
 
 #include <benthos/divecomputer/driver.hpp>
 
-using namespace benthos;
+using namespace benthos::dc;
 
 Driver::Driver(const driver_interface_t * driver, const driver_manifest_t * manifest, const std::string & path, const std::string & args)
 	: m_driver(driver), m_manifest(manifest), m_device(0), m_parser(0)

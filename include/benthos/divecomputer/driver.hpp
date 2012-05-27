@@ -42,7 +42,7 @@
 #include <benthos/divecomputer/driverclass.hpp>
 #include <benthos/divecomputer/plugin.hpp>
 
-namespace benthos
+namespace benthos { namespace dc
 {
 
 /**
@@ -133,6 +133,6 @@ private:
 
 };
 
-} /* benthos */
+} } /* benthos::dc */
 
 #endif /* BENTHOS_DC_DRIVER_HPP_ */

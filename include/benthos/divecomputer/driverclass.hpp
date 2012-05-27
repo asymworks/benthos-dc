@@ -43,7 +43,7 @@
 
 #include <benthos/divecomputer/plugin.hpp>
 
-namespace benthos
+namespace benthos { namespace dc
 {
 
 // Forward Declaration of Driver class
@@ -117,6 +117,6 @@ private:
 
 };
 
-} /* benthos */
+} } /* benthos::dc */
 
 #endif /* BENTHOS_DC_DRIVERCLASS_HPP_ */

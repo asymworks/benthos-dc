@@ -39,7 +39,7 @@
 #include <benthos/divecomputer/plugin.hpp>
 #include <benthos/divecomputer/registry.hpp>
 
-using namespace benthos;
+using namespace benthos::dc;
 
 Plugin::Plugin(const plugin_manifest_t * manifest, const std::string & lib_path)
 	: m_manifest(manifest), m_lib_path(lib_path), m_lib_handle(0),

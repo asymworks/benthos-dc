@@ -45,7 +45,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace benthos
+namespace benthos { namespace dc
 {
 
 /**
@@ -277,6 +277,6 @@ private:
 
 };
 
-} /* benthos */
+} } /* benthos::dc */
 
 #endif /* BENTHOS_DC_REGISTRY_HPP_ */
