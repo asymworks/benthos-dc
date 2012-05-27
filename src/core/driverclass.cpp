@@ -65,7 +65,7 @@ const std::string & DriverClass::name() const
 
 boost::shared_ptr<Driver> DriverClass::open(const std::string & device, const std::string & args) const
 {
-	return boost::shared_ptr<Driver>(new Driver(m_table, device, args));
+	return boost::shared_ptr<Driver>(new Driver(m_table, m_manifest, device, args));
 }
 
 const std::list<param_info_t> & DriverClass::parameters() const

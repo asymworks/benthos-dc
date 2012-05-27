@@ -61,19 +61,73 @@ protected:
 	/**
 	 * @brief Class Constructor
 	 * @param[in] Driver Interface Table
+	 * @param[in] Driver Manifest
 	 * @param[in] Device Path
 	 * @param[in] Driver Arguments
 	 */
-	Driver(const driver_interface_t * driver, const std::string & path, const std::string & args);
+	Driver(const driver_interface_t * driver, const driver_manifest_t * manifest, const std::string & path, const std::string & args);
 
 public:
 
 	//! Class Destructor
 	~Driver();
 
+public:
+
+	//! @return Last Driver Error Message
+	std::string errmsg() const;
+
+	//! @return New Transfer Token
+	std::string issue_token() const;
+
+	//! @return Manufacturer Name of Connected Device
+	std::string manufacturer() const;
+
+	//! @return Model Name of Connected Device
+	std::string model_name() const;
+
+	//! @return Model Number of Connected Device
+	uint8_t model_number() const;
+
+	//! @return Serial Number of Connected Device
+	uint32_t serial_number() const;
+
+	//! @param[in] Transfer Token
+	void set_token(const std::string & token) const;
+
+	//! @return Dive Computer Tick Count
+	uint32_t ticks() const;
+
+	//! @return Number of Bytes to Transfer
+	uint32_t transfer_length() const;
+
+public:
+
+	/**
+	 * @brief Parse a Dive
+	 * @param[in] Dive Data
+	 * @param[in] Header Data Callback
+	 * @param[in] Profile Data Callback
+	 * @param[in] User Data for Callback
+	 */
+	void parse(std::vector<uint8_t> data, header_callback_fn_t hcb, waypoint_callback_fn_t pcb, void * userdata);
+
+	/**
+	 * @brief Transfer Dives from the Device
+	 * @param[in] Progress Callback Function
+	 * @param[in] User Data for Callback
+	 *
+	 * Transfers all data from the device since the transfer token (if set).
+	 * The progress callback is called periodically (no guaranteed rate) during
+	 * data transfer to report current transfer progress.
+	 */
+	std::list<std::vector<uint8_t> > transfer(transfer_callback_fn_t cb, void * userdata) const;
+
 private:
 	const driver_interface_t *			m_driver;
+	const driver_manifest_t *			m_manifest;
 	dev_handle_t 						m_device;
+	parser_handle_t						m_parser;
 
 	friend class DriverClass;
 

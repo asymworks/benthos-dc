@@ -43,6 +43,11 @@ static const driver_interface_t smart_driver_interface =
 	smart_driver_get_length,	// driver_get_length
 	smart_driver_transfer,		// driver_transfer
 	smart_driver_extract,		// driver_extract
+	smart_parser_create,		// parser_create
+	smart_parser_close,			// parser_close
+	smart_parser_reset,			// parser_reset
+	smart_parser_parse_header,	// parser_parse_header
+	smart_parser_parse_profile	// parser_parse_profile
 };
 
 int plugin_load()

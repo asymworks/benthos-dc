@@ -262,7 +262,7 @@ int smart_parser_create(parser_handle_t * abstract, dev_handle_t abstract_dev)
 
 	smart_parser_reset((parser_handle_t)p);
 
-	*parser = p;
+	*abstract = (parser_handle_t)p;
 	return 0;
 }
 
@@ -875,8 +875,8 @@ int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, ui
 		}
 
 		// Process the DTI
-		uint32_t value;
-		int32_t svalue;
+		uint32_t value = 0;
+		int32_t svalue = 0;
 
 		if (smart_process_dti(parser, data, size, & offset, & parser->dti_table[id], & value, & svalue) != 0)
 			return -1;

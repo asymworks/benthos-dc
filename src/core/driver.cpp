@@ -36,8 +36,8 @@
 
 using namespace benthos;
 
-Driver::Driver(const driver_interface_t * driver, const std::string & path, const std::string & args)
-	: m_driver(driver), m_device(0)
+Driver::Driver(const driver_interface_t * driver, const driver_manifest_t * manifest, const std::string & path, const std::string & args)
+	: m_driver(driver), m_manifest(manifest), m_device(0), m_parser(0)
 {
 	int rc = m_driver->driver_create(& m_device);
 	if (rc != 0)
@@ -54,9 +54,127 @@ Driver::Driver(const driver_interface_t * driver, const std::string & path, cons
 			throw std::runtime_error("Failed to open '" + path + ": " +
 					std::string(m_driver->driver_errmsg(m_device)));
 	}
+
+	rc = m_driver->parser_create(& m_parser, m_device);
+	if (rc != 0)
+		throw std::runtime_error("Failed to create data parser: " + std::string(strerror(errno)));
 }
 
 Driver::~Driver()
 {
+	m_driver->parser_close(m_parser);
 	m_driver->driver_close(m_device);
+}
+
+std::string Driver::errmsg() const
+{
+	return std::string(m_driver->driver_errmsg(m_device));
+}
+
+std::string Driver::issue_token() const
+{
+	return std::string(m_driver->driver_issue_token(m_device));
+}
+
+std::string Driver::manufacturer() const
+{
+	uint8_t mn = model_number();
+	std::map<int, model_info_t>::const_iterator it = m_manifest->driver_models.find(mn);
+	if (it != m_manifest->driver_models.end())
+	{
+		return it->second.manuf_name;
+	}
+
+	return std::string();
+}
+
+std::string Driver::model_name() const
+{
+	uint8_t mn = model_number();
+	std::map<int, model_info_t>::const_iterator it = m_manifest->driver_models.find(mn);
+	if (it != m_manifest->driver_models.end())
+	{
+		return it->second.model_name;
+	}
+
+	return std::string();
+}
+
+uint8_t Driver::model_number() const
+{
+	return m_driver->driver_get_model(m_device);
+}
+
+void Driver::parse(std::vector<uint8_t> data, header_callback_fn_t hcb, waypoint_callback_fn_t pcb, void * userdata)
+{
+	int rc = m_driver->parser_reset(m_parser);
+	if (rc != 0)
+		throw std::runtime_error("Failed to reset data parser: " + errmsg());
+
+	rc = m_driver->parser_parse_header(m_parser, data.data(), data.size(), hcb, userdata);
+	if (rc != 0)
+		throw std::runtime_error("Failed to parse dive header: " + errmsg());
+
+	rc = m_driver->parser_parse_profile(m_parser, data.data(), data.size(), pcb, userdata);
+	if (rc != 0)
+		throw std::runtime_error("Failed to parse dive profile: " + errmsg());
+}
+
+uint32_t Driver::serial_number() const
+{
+	return m_driver->driver_get_serial(m_device);
+}
+
+void Driver::set_token(const std::string & token) const
+{
+	int rc = m_driver->driver_set_token(m_device, token.c_str());
+	if (rc != 0)
+		throw std::runtime_error("Failed to set Transfer Token: " + errmsg());
+}
+
+uint32_t Driver::ticks() const
+{
+	return m_driver->driver_get_ticks(m_device);
+}
+
+uint32_t Driver::transfer_length() const
+{
+	uint32_t result;
+	int rc = m_driver->driver_get_length(m_device, & result);
+	if (rc != 0)
+		throw std::runtime_error("Failed to get transfer length: " + errmsg());
+
+	return result;
+}
+
+void _benthos_dc_extract_dives_cb(void * userdata, void * data, uint32_t length)
+{
+	std::list<std::vector<uint8_t> > * dl = (std::list<std::vector<uint8_t> > *)(userdata);
+	dl->push_back(std::vector<uint8_t>((uint8_t *)data, (uint8_t *)(data) + length));
+}
+
+std::list<std::vector<uint8_t> > Driver::transfer(transfer_callback_fn_t cb, void * userdata) const
+{
+	std::list<std::vector<uint8_t> > result;
+	uint32_t tlen = transfer_length();
+	void * data = malloc(tlen);
+	if (data == NULL)
+		throw std::runtime_error("Failed to allocate memory for transfer: " + std::string(strerror(errno)));
+
+	int rc = m_driver->driver_transfer(m_device, data, tlen, cb, userdata);
+	if (rc != 0)
+	{
+		free(data);
+		throw std::runtime_error("Failed to transfer dive data: " + errmsg());
+	}
+
+	rc = m_driver->driver_extract(m_device, data, tlen, & _benthos_dc_extract_dives_cb, & result);
+	if (rc != 0)
+	{
+		free(data);
+		throw std::runtime_error("Failed to extract dive data: " + errmsg());
+	}
+
+	free(data);
+	return result;
 }

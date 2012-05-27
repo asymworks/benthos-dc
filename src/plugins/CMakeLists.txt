@@ -32,7 +32,7 @@
 #
 
 # C Flags
-add_definitions( -std=gnu99 -fPIC )
+add_definitions( -std=gnu99 -fPIC -g )
 
 # Build the plugins
 add_subdirectory(smart)
