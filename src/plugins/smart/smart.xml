@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <plugin name="benthosdc-smart" library="smart" version="1.0">
 	<driver name="smart">
-		<description>Device Driver for Uwatec Smart devices</description>
+		<description>Uwatec Smart Driver</description>
 		<interface>irda</interface>
 		<parameters>
 			<parameter name="chunk_size" type="int">IrDA transfer chunk size, between 2 and 32 bytes.  Default is 4.</parameter>
