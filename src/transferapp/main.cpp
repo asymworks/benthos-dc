@@ -579,9 +579,10 @@ int main(int argc, char ** argv)
 	// Setup Program Options
 	po::options_description generic("Generic Options");
 	generic.add_options()
-		("help",		"Display this help message")
+		("help,?",		"Display this help message")
 		("list",		"Display all installed drivers and exit")
 		("quiet,q", 	"Suppress status messages")
+		("version,v",	"Display version information and exit")
 	;
 
 	po::options_description transfer("Transfer Options");
@@ -612,6 +613,14 @@ int main(int argc, char ** argv)
 	{
 		std::cout << "Usage: " << argv[0] << " [options] <device>" << std::endl;
 		std::cout << desc << std::endl;
+		return 0;
+	}
+
+	// Show the Version Information
+	if (vm.count("version"))
+	{
+		std::cout << "Benthos Dive Computer Library version " << BENTHOS_DC_VERSION_STRING << std::endl;
+		std::cout << "Copyright (c) 2011-2012 Asymworks, LLC.  All Rights Reserved." << std::endl;
 		return 0;
 	}
 

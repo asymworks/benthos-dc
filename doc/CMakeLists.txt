@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# Master CMake File for the Benthos Dive Computer Library (benthos_dc)
+# CMake File for the Benthos Dive Computer Library (benthos_dc)
 #------------------------------------------------------------------------------
 #
 # Copyright (C) 2011 Asymworks, LLC.  All Rights Reserved.
@@ -31,27 +31,18 @@
 # WITH THE SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 2.8.8)
-project(benthos_dc)
-
-set(BENTHOS_DC_MAJOR_VERSION 0)
-set(BENTHOS_DC_MINOR_VERSION 1)
-set(BENTHOS_DC_PATCH_VERSION 0)
-set(BENTHOS_DC_VERSION
-	${BENTHOS_DC_MAJOR_VERSION}.${BENTHOS_DC_MINOR_VERSION}.${BENTHOS_DC_PATCH_VERSION})
-
-set(CMAKE_MODULE_PATH 
-	${CMAKE_MODULE_PATH} 
-	${CMAKE_SOURCE_DIR}/cmake/modules/
-)
-
-SET(BENTHOS_DC_DATADIR		"${CMAKE_INSTALL_PREFIX}/share/benthos")
-SET(BENTHOS_DC_LIBDIR		"${CMAKE_INSTALL_PREFIX}/lib")
-SET(BENTHOS_DC_PLUGINDIR	"${CMAKE_INSTALL_PREFIX}/lib/benthos")
-SET(BENTHOS_DC_SPLUGINDIR	"${CMAKE_INSTALL_PREFIX}/lib/static/benthos")
-
-# All source files are in the src directory
-add_subdirectory(src)
-
-# Generate documentation in the doc directory
-add_subdirectory(doc)
+# Find Doxygen and build documentation
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+	configure_file(
+		${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
+		${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+		@ONLY
+	)
+	
+	add_custom_target(doc
+		${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		COMMENT "Generating API Documentation with Doxygen" VERBATIM
+	)
+endif (DOXYGEN_FOUND)
