@@ -4,9 +4,9 @@
 		<description>Uwatec Smart Driver</description>
 		<interface>irda</interface>
 		<parameters>
-			<parameter name="chunk_size" type="int">IrDA transfer chunk size, between 2 and 32 bytes.  Default is 4.</parameter>
-			<parameter name="lsap" type="int">IrDA Link Service Access Point identifier.  Default is 1.</parameter>
-			<parameter name="timeout" type="int">IrDA Timeout, in milliseconds.  A value less than 0 indicates blocking I/O.  Default is 2000.</parameter>
+			<parameter name="chunk_size" type="int" default="4">IrDA transfer chunk size, between 2 and 32 bytes.  Default is 4.</parameter>
+			<parameter name="lsap" type="int" default="1">IrDA Link Service Access Point identifier.  Default is 1.</parameter>
+			<parameter name="timeout" type="int" default="2000">IrDA Timeout, in milliseconds.  A value less than 0 indicates blocking I/O.  Default is 2000.</parameter>
 		</parameters>
 		<models manufacturer="Uwatec">
 			<model id="16">Smart Pro</model>
