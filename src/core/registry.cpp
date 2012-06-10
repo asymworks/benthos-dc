@@ -94,6 +94,27 @@ const driver_manifest_t * PluginRegistry::findDriver(const std::string & name) c
 	return NULL;
 }
 
+PluginRegistry::DriverClassPtr PluginRegistry::loadDriver(const std::string & name)
+{
+	// Find Driver
+	const driver_manifest_t * dm = findDriver(name);
+	if (dm == NULL)
+		throw std::runtime_error("Driver '" + name + "' not found");
+
+	// Load the Plugin
+	PluginPtr plugin = loadPlugin(dm->plugin_name);
+	if (! plugin)
+		throw std::runtime_error("Failed to load plugin '" + dm->plugin_name + "'");
+
+	// Load the Driver Class
+	DriverClassPtr dcls = plugin->driver(name);
+	if (! dcls)
+		throw std::runtime_error("Failed to load driver '" + name + "' from plugin '" + dm->plugin_name + "'");
+
+	// Return Driver Class
+	return dcls;
+}
+
 const plugin_manifest_t * PluginRegistry::findPlugin(const std::string & name) const
 {
 	std::list<plugin_manifest_t>::const_iterator it;

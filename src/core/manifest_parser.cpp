@@ -110,6 +110,8 @@ void parseDriverParams(xmlNode * node, driver_manifest_t & m)
 					pi.param_type = ptUInt;
 				else if (strcmp(type, "float") == 0)
 					pi.param_type = ptFloat;
+				else if (strcmp(type, "model") == 0)
+					pi.param_type = ptModel;
 				else
 					throw std::runtime_error("Unknown parameter type '" + std::string(type) + "'");
 			}

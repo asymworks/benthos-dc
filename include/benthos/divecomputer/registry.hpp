@@ -56,7 +56,8 @@ typedef enum
 	ptString,		///< String Parameter
 	ptInt,			///< Integer Parameter
 	ptUInt,			///< Unsigned Integer Parameter
-	ptFloat			///< Floating-Point Parameter
+	ptFloat,		///< Floating-Point Parameter
+	ptModel,		///< Model Number Parameter
 
 } param_type_t;
 
