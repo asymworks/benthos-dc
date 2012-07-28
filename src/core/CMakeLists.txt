@@ -46,7 +46,7 @@ find_package( LibXml2 2.7 REQUIRED )
 
 # Include Paths
 include_directories(
-	${Boost_INCLUDE_DIR},
+	${Boost_INCLUDE_DIR}
 	${LIBXML2_INCLUDE_DIR}
 )
 
@@ -65,11 +65,13 @@ configure_file(
 
 # Build the Benthos Dive Computer Library
 add_library(benthos-dc SHARED
+	arglist.cpp
 	driver.cpp
 	driverclass.cpp
 	manifest_parser.cpp
 	plugin.cpp
 	registry.cpp
+	$<TARGET_OBJECTS:common_module>
 )
 
 # Link the Benthos Dive Computer Library

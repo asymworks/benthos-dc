@@ -181,6 +181,7 @@ typedef struct
 	xmlNode *						root;			///< XML Root Node
 	xmlNode *						profiles;		///< UDDF Profiles Node
 	xmlNode *						repgrp;			///< UDDF Repetition Group Node
+	bool							hdr_only;		///< Parse Header Only
 
 	mix_list_t						mixes;			///< List of Gas Mixes
 	std::map<uint8_t, xmlNode *>	tanks;			///< List of Tank Nodes
@@ -416,6 +417,9 @@ void parse_profile(void * userdata, uint8_t token, int32_t value, uint8_t index,
 	char buf[255];
 	parser_data * _data = (parser_data *)userdata;
 
+	if (_data->hdr_only)
+		return;
+
 	switch (token)
 	{
 	case DIVE_WAYPOINT_TIME:
@@ -448,7 +452,7 @@ void parse_profile(void * userdata, uint8_t token, int32_t value, uint8_t index,
 	}
 }
 
-void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfile)
+void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfile, bool hdr_only)
 {
 	parser_data _data;
 
@@ -485,6 +489,7 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 	mixes.insert(std::pair<std::string, mix_t>("ean32", mix_t(320, 0)));
 	mixes.insert(std::pair<std::string, mix_t>("ean36", mix_t(360, 0)));
 
+	_data.hdr_only = hdr_only;
 	_data.profiles = profiles;
 	_data.repgrp = 0;
 	_data.rgid = 0;
@@ -590,6 +595,7 @@ int main(int argc, char ** argv)
 		("driver,d", po::value<std::string>(), "Driver name")
 		("dargs", po::value<std::string>(), "Driver arguments")
 		("device", po::value<std::string>(), "Device name")
+		("header-only,h", "Save header only, not profile data")
 		("output-file,o", po::value<std::string>(), "Output file")
 		("token,t", po::value<std::string>(), "Transfer token")
 		("token-path", po::value<std::string>(), "Transfer token storage path")
@@ -638,6 +644,7 @@ int main(int argc, char ** argv)
 		return 1;
 	}
 
+	bool honly = (vm.count("header-only") > 0);
 	bool quiet = (vm.count("quiet") > 0);
 	std::string driver_name(vm["driver"].as<std::string>());
 
@@ -790,7 +797,7 @@ int main(int argc, char ** argv)
 		if (vm.count("output-file"))
 			outfile = vm["output-file"].as<std::string>();
 
-		parseDives(dev, dive_data, outfile);
+		parseDives(dev, dive_data, outfile, honly);
 		if (! quiet && ! outfile.empty())
 			std::cout << "Wrote UDDF dive data to " << outfile << std::endl;
 	}
