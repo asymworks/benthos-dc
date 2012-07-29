@@ -53,8 +53,9 @@ typedef struct device_t *		dev_handle_t;
  * @param[in] User Data Pointer
  * @param[in] Current Number of Bytes Transferred
  * @param[in] Total Number of Bytes to Transfer
+ * @param[out] Cancel Transfer Flag
  */
-typedef void (* transfer_callback_fn_t)(void *, uint32_t, uint32_t);
+typedef void (* transfer_callback_fn_t)(void *, uint32_t, uint32_t, int *);
 
 /**
  * @brief Dive Data Callback

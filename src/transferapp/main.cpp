@@ -143,7 +143,7 @@ void draw_progress_bar(double pct)
 	std::flush(std::cout);
 }
 
-void progress_bar(void * userdata, uint32_t transferred, uint32_t total)
+void progress_bar(void * userdata, uint32_t transferred, uint32_t total, int *)
 {
 	static int filled = 0;
 	double pct = transferred / (double)total;

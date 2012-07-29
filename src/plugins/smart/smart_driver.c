@@ -405,6 +405,7 @@ int smart_driver_transfer(dev_handle_t abstract, void * buffer, uint32_t size, t
 
 	unsigned char cmd[] = { 0xc4, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
 	int timeout = 0;
+	int cancel = 0;
 	uint32_t len = size;
 	uint32_t nb;
 	uint32_t pos;
@@ -425,7 +426,14 @@ int smart_driver_transfer(dev_handle_t abstract, void * buffer, uint32_t size, t
 
 	// Start Transfer
 	if (cb != NULL)
-		cb(userdata, 0, size);
+		cb(userdata, 0, size, & cancel);
+
+	if (cancel)
+	{
+		dev->errcode = DRIVER_ERR_CANCELLED;
+		dev->errmsg = "Operation was cancelled by the user";
+		return -1;
+	}
 
 	pos = 0;
 	while (len > 0)
@@ -456,7 +464,14 @@ int smart_driver_transfer(dev_handle_t abstract, void * buffer, uint32_t size, t
 		pos += nt;
 
 		if (cb != NULL)
-			cb(userdata, pos, size);
+			cb(userdata, pos, size, & cancel);
+
+		if (cancel)
+		{
+			dev->errcode = DRIVER_ERR_CANCELLED;
+			dev->errmsg = "Operation was cancelled by the user";
+			return -1;
+		}
 	}
 
 	// Transfer Succeeded
