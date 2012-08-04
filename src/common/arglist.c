@@ -54,6 +54,9 @@ int arglist_parse(arglist_t * arglist, const char * argstring)
 	char name[258];		ssize_t nsize;
 	char value[258];	ssize_t vsize;
 
+	memset(name, '\0', 258);
+	memset(value, '\0', 258);
+
 	// In case there is no argument string to parse
 	* arglist = NULL;
 
@@ -135,8 +138,8 @@ int arglist_parse(arglist_t * arglist, const char * argstring)
 					cur = entry;
 				}
 
-				nsize = 0;	name[0] = '\0';
-				vsize = 0;	value[0] = '\0';
+				nsize = 0;	memset(name, '\0', 258);
+				vsize = 0;	memset(value, '\0', 258);
 				in_name = 1;
 			}
 		}
