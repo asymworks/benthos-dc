@@ -181,6 +181,12 @@ int irda_socket_close(irda_t s)
 	return 0;
 }
 
+void irda_socket_shutdown(irda_t s)
+{
+	// irda_socket_close uses shutdown() internally
+	irda_socket_close(s);
+}
+
 int irda_socket_set_timeout(irda_t s, long timeout)
 {
 	if (s == NULL)

@@ -69,6 +69,7 @@ typedef struct
 	plugin_driver_create_fn_t			driver_create;
 	plugin_driver_open_fn_t				driver_open;
 	plugin_driver_close_fn_t			driver_close;
+	plugin_driver_shutdown_fn_t			driver_shutdown;
 	plugin_driver_name_fn_t				driver_name;
 
 	plugin_driver_errmsg_fn_t			driver_errmsg;

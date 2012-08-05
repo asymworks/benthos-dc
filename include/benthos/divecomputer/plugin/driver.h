@@ -88,6 +88,15 @@ typedef int (* plugin_driver_open_fn_t)(dev_handle_t, const char *, const char *
 typedef void (* plugin_driver_close_fn_t)(dev_handle_t);
 
 /**
+ * @brief Shutdown a Device
+ * @param[in] Device Handle
+ *
+ * Causes an asynchronous shutdown of the device connection socket, cancelling
+ * blocking I/O.
+ */
+typedef void (* plugin_driver_shutdown_fn_t)(dev_handle_t);
+
+/**
  * @brief Get the Device Driver Name
  * @return Driver Name
  */

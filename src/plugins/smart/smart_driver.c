@@ -278,9 +278,22 @@ void smart_driver_close(dev_handle_t abstract)
 		return;
 
 	if (dev->s != NULL)
-		irda_socket_close(((smart_device_t)dev)->s);
+		irda_socket_close(dev->s);
 
 	free(dev);
+}
+
+void smart_driver_shutdown(dev_handle_t abstract)
+{
+	smart_device_t dev = (smart_device_t)(abstract);
+
+	if (dev == NULL)
+		return;
+
+	if (dev->s != NULL)
+		irda_socket_shutdown(dev->s);
+
+	dev->s = NULL;
 }
 
 const char * smart_driver_name(dev_handle_t abstract)

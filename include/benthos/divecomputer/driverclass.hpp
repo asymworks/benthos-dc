@@ -90,7 +90,7 @@ public:
 	const std::string & model_parameter() const;
 
 	//! @return List of Models
-	const std::map<int, model_info_t> models() const;
+	const std::map<int, model_info_t> & models() const;
 
 	//! @return Driver Name
 	const std::string & name() const;

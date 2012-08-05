@@ -109,6 +109,15 @@ int irda_socket_open(irda_t * s);
 int irda_socket_close(irda_t s);
 
 /**
+ * @brief Shutdown an IrDA Socket
+ * @param [in] IrDA Socket Handle
+ *
+ * Performs a shutdown() of the IrDA socket, closing the socket and releasing
+ * blocking I/O calls.
+ */
+void irda_socket_shutdown(irda_t s);
+
+/**
  * @brief Set the IrDA socket timeout
  * @param [in] IrDA Socket Handle
  * @param [in] Timeout value in milliseconds

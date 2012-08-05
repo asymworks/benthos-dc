@@ -77,6 +77,7 @@ struct smart_device_
 int smart_driver_create(dev_handle_t * dev);
 int smart_driver_open(dev_handle_t dev, const char *, const char * args);
 void smart_driver_close(dev_handle_t dev);
+void smart_driver_shutdown(dev_handle_t dev);
 const char * smart_driver_name(dev_handle_t dev);
 
 const char * smart_driver_errmsg(dev_handle_t dev);

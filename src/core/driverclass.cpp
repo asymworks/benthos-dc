@@ -58,7 +58,7 @@ const std::string & DriverClass::model_parameter() const
 	return m_manifest->model_param;
 }
 
-const std::map<int, model_info_t> DriverClass::models() const
+const std::map<int, model_info_t> & DriverClass::models() const
 {
 	return m_manifest->driver_models;
 }
