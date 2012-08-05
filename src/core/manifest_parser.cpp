@@ -130,6 +130,14 @@ void parseDriverParams(xmlNode * node, driver_manifest_t & m)
 		if (pi.param_type == (param_type_t)-1)
 			throw std::runtime_error("Missing 'type' attribute in <parameter>");
 
+		if (pi.param_type == ptModel)
+		{
+			if (! m.model_param.empty())
+				throw std::runtime_error("Only one parameter of type 'model' is allowed");
+			else
+				m.model_param = pi.param_name;
+		}
+
 		xmlNode * child = cur->children;
 		for ( ; child ; child = child->next )
 		{

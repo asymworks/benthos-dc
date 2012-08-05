@@ -110,6 +110,8 @@ typedef struct
 	std::list<param_info_t>		driver_params;
 	std::map<int, model_info_t>	driver_models;
 
+	std::string					model_param;
+
 } driver_manifest_t;
 
 /**

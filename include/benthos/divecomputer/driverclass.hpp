@@ -86,6 +86,9 @@ public:
 	//! @return Driver Interface Type
 	const std::string & interface() const;
 
+	//! @return Parameter Name which holds the Model Type
+	const std::string & model_parameter() const;
+
 	//! @return List of Models
 	const std::map<int, model_info_t> models() const;
 
