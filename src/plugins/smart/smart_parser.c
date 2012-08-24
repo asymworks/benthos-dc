@@ -51,6 +51,17 @@ typedef struct
 
 } dti_entry_t;
 
+/*
+ * Smart Alarm Name Entry
+ */
+typedef struct
+{
+	uint8_t				idx;	///< Index
+	uint8_t				mask;	///< Bit Mask
+	const char *		name;	///< Alarm Name
+
+} alarm_entry_t;
+
 enum
 {
 	DTI_PRESSURE_DEPTH,		///< Pressure/Depth DTI
@@ -71,6 +82,9 @@ struct smart_parser_
 	uint32_t				hdr_size;		///< Header Size
 	uint8_t					dti_size;		///< DTI Table Size
 	const dti_entry_t	*	dti_table;		///< DTI Table Pointer
+
+	uint8_t					alarm_size;		///< Alarm Table Size
+	const alarm_entry_t *	alarm_table;	///< Alarm Table Pointer
 
 	uint32_t				time;			///< Current Time
 	uint32_t				depth;			///< Current Depth
@@ -159,6 +173,12 @@ static const dti_entry_t smart_aladin_tec2g_table[] =
 	{DTI_ALARMS,			1,	1,	9,	0,	0},		// 1111 1111 0ddd dddd
 };
 
+static const alarm_entry_t smart_aladin_tec2g_alarms[] =
+{
+	{ 0,	(1 << 1),		"ascent" },
+	{ 0,	(1 << 2),		"bookmark" },
+};
+
 // Model Type 20 (Smart Com)
 static const dti_entry_t smart_com_table[] =
 {
@@ -219,30 +239,40 @@ int smart_parser_create(parser_handle_t * abstract, dev_handle_t abstract_dev)
 		p->hdr_size = 92;
 		p->dti_size = sizeof(smart_pro_table) / sizeof(dti_entry_t);
 		p->dti_table = smart_pro_table;
+		p->alarm_size = 0;
+		p->alarm_table = 0;
 		break;
 
 	case MDL_GALILEO_SOL:
 		p->hdr_size = 152;
 		p->dti_size = sizeof(smart_galileo_sol_table) / sizeof(dti_entry_t);
 		p->dti_table = smart_galileo_sol_table;
+		p->alarm_size = 0;
+		p->alarm_table = 0;
 		break;
 
 	case MDL_ALADIN_TEC:
 		p->hdr_size = 108;
 		p->dti_size = sizeof(smart_aladin_table) / sizeof(dti_entry_t);
 		p->dti_table = smart_aladin_table;
+		p->alarm_size = 0;
+		p->alarm_table = 0;
 		break;
 
 	case MDL_ALADIN_TEC2G:
 		p->hdr_size = 116;
 		p->dti_size = sizeof(smart_aladin_tec2g_table) / sizeof(dti_entry_t);
 		p->dti_table = smart_aladin_tec2g_table;
+		p->alarm_size = sizeof(smart_aladin_tec2g_alarms) / sizeof(alarm_entry_t);
+		p->alarm_table = smart_aladin_tec2g_alarms;
 		break;
 
 	case MDL_SMART_COM:
 		p->hdr_size = 100;
 		p->dti_size = sizeof(smart_com_table) / sizeof(dti_entry_t);
 		p->dti_table = smart_com_table;
+		p->alarm_size = 0;
+		p->alarm_table = 0;
 		break;
 
 	case MDL_SMART_TEC:
@@ -250,6 +280,8 @@ int smart_parser_create(parser_handle_t * abstract, dev_handle_t abstract_dev)
 		p->hdr_size = 132;
 		p->dti_size = sizeof(smart_tec_table) / sizeof(dti_entry_t);
 		p->dti_table = smart_tec_table;
+		p->alarm_size = 0;
+		p->alarm_table = 0;
 		break;
 
 	default:
@@ -832,6 +864,21 @@ int smart_parse_dti(smart_parser_t parser, const dti_entry_t * dti, uint32_t val
 	return 0;
 }
 
+const char * alarm_name(smart_parser_t parser, uint8_t idx, uint8_t mask)
+{
+	if ((parser == NULL) || ! parser->alarm_size)
+		return 0;
+
+	int i;
+	for (i = 0; i < parser->alarm_size; ++i)
+	{
+		if ((parser->alarm_table[i].idx == idx) && (parser->alarm_table[i].mask == mask))
+			return parser->alarm_table[i].name;
+	}
+
+	return 0;
+}
+
 int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, uint32_t size, waypoint_callback_fn_t cb, void * userdata)
 {
 	smart_parser_t parser = (smart_parser_t)(abstract);
@@ -927,8 +974,20 @@ int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, ui
 					for (uint8_t j = 0; j < 9; j++)
 					{
 						uint16_t mask = (1 << j);
-						if ((parser->alarms[i] & mask) == mask)
-							if (cb) cb(userdata, DIVE_WAYPOINT_ALARM, j, i, 0);
+						if (((parser->alarms[i] & mask) == mask) && cb)
+						{
+							const char * aname = alarm_name(parser, i, mask);
+							if (! aname)
+							{
+								char buf[20];
+								sprintf(buf, "alarm%u-%u", i, j);
+								cb(userdata, DIVE_WAYPOINT_ALARM, j, i, buf);
+							}
+							else
+							{
+								cb(userdata, DIVE_WAYPOINT_ALARM, j, i, aname);
+							}
+						}
 					}
 				}
 

@@ -90,6 +90,7 @@ enum
 	DIVE_WAYPOINT_NDL,				///< No-Decompression Limit (minutes)
 	DIVE_WAYPOINT_HEARTRATE,		///< Heart Rate (bpm)
 	DIVE_WAYPOINT_BEARING,			///< Bearing (degrees)
+	DIVE_WAYPOINT_HEADING,			///< Heading (degrees)
 	DIVE_WAYPOINT_VENDOR,			///< Vendor-Defined Data
 };
 
