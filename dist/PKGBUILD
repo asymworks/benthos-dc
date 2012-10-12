@@ -1,5 +1,7 @@
 #------------------------------------------------------------------------------
-# Master CMake File for the Benthos Dive Computer Library (benthos_dc)
+# Arch PKGBUILD for the Benthos Scuba Dive Computer C++ Library (benthos-dc)
+# 
+# Maintainer: Jonathan P. Krauss <jkrauss@asymworks.com>
 #------------------------------------------------------------------------------
 #
 # Copyright (C) 2011 Asymworks, LLC.  All Rights Reserved.
@@ -31,31 +33,32 @@
 # WITH THE SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 2.8.8)
-project(benthos_dc)
+pkgname=benthos-dc
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Benthos Scuba Dive Computer Library for C++"
+arch=('i686' 'x86_64')
+license=('bsd')
+url="http://benthos-log.net"
+depends=('boost-libs' 'libxml2')
+optdepends=()
+makedepends=('cmake' 'boost')
+conflicts=()
+replaces=()
+backup=()
+source=("http://benthos-log.com/files/${pkgname}-${pkgver}.tar.bz2")
+md5sums=('a787ceb9dfc308a5e8c5341c8bf43a60')
 
-set(BENTHOS_DC_MAJOR_VERSION 0)
-set(BENTHOS_DC_MINOR_VERSION 1)
-set(BENTHOS_DC_PATCH_VERSION 0)
-set(BENTHOS_DC_VERSION
-	${BENTHOS_DC_MAJOR_VERSION}.${BENTHOS_DC_MINOR_VERSION}.${BENTHOS_DC_PATCH_VERSION})
+build() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	[[ -d build ]] && rm -r build
+	mkdir build && cd build
+	cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr .. || return 1
+	make || return 1
+}
 
-set(CMAKE_MODULE_PATH 
-	${CMAKE_MODULE_PATH} 
-	${CMAKE_SOURCE_DIR}/cmake/modules/
-)
-
-SET(BENTHOS_DC_DATADIR		"${CMAKE_INSTALL_PREFIX}/share/benthos")
-SET(BENTHOS_DC_LIBDIR		"${CMAKE_INSTALL_PREFIX}/lib")
-SET(BENTHOS_DC_PLUGINDIR	"${CMAKE_INSTALL_PREFIX}/lib/benthos")
-SET(BENTHOS_DC_SPLUGINDIR	"${CMAKE_INSTALL_PREFIX}/lib/static/benthos")
-
-# All source files are in the src directory
-add_subdirectory(src)
-
-# Generate documentation in the doc directory
-add_subdirectory(doc)
-
-# Install top-level files
-install(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION share/benthos/dc/)
-install(FILES ${CMAKE_SOURCE_DIR}/README DESTINATION share/benthos/dc/)
+package() {
+	cd "${srcdir}/${pkgname}-${pkgver}/build"
+	make DESTDIR="${pkgdir}" install || return 1
+	install -Dm 644 ../LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
