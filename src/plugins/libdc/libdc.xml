@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- This file is generated automatically by src/plugins/libdc/_genfiles.py -->
+<plugin name="benthosdc-libdc" library="libdc" version="1.0">
+    <driver name="libdc">
+        <description>libdivecomputer Driver</description>
+        <interface>serial</interface>
+        <parameters>
+            <parameter name="model" type="model">Dive Computer Model</parameter>
+        </parameters>
+        <models>
+			<model id="1" manufacturer="Aeris">Aeris A300 AI</model>
+			<model id="2" manufacturer="Aeris">Aeris Atmos AI</model>
+			<model id="3" manufacturer="Aeris">Aeris Atmos AI 2</model>
+			<model id="4" manufacturer="Aeris">Aeris Compumask</model>
+			<model id="5" manufacturer="Aeris">Aeris Elite T3</model>
+			<model id="6" manufacturer="Aeris">Aeris Elite T3</model>
+			<model id="7" manufacturer="Aeris">Aeris Epic</model>
+			<model id="8" manufacturer="Aeris">Aeris Epic</model>
+			<model id="9" manufacturer="Aeris">Aeris F10</model>
+			<model id="10" manufacturer="Aeris">Aeris Manta</model>
+			<model id="11" manufacturer="Aeris">Aeris XR-2</model>
+			<model id="12" manufacturer="Apeks">Apeks Quantum X</model>
+			<model id="13" manufacturer="Atomic Aquatics">Atomic Aquatics Cobalt</model>
+			<model id="14" manufacturer="Cressi">Cressi Edy</model>
+			<model id="15" manufacturer="Cressi">Cressi Leonardo</model>
+			<model id="16" manufacturer="DiveRite">DiveRite NiTek Trio</model>
+			<model id="17" manufacturer="Genesis">Genesis React Pro</model>
+			<model id="18" manufacturer="Heinrichs Weikamp">Heinrichs Weikamp Frog</model>
+			<model id="19" manufacturer="Heinrichs Weikamp">Heinrichs Weikamp OSTC</model>
+			<model id="20" manufacturer="Heinrichs Weikamp">Heinrichs Weikamp OSTC 2N</model>
+			<model id="21" manufacturer="Heinrichs Weikamp">Heinrichs Weikamp OSTC Mk2</model>
+			<model id="22" manufacturer="Hollis">Hollis DG03</model>
+			<model id="23" manufacturer="Mares">Mares Darwin</model>
+			<model id="24" manufacturer="Mares">Mares Darwin Air</model>
+			<model id="25" manufacturer="Mares">Mares Icon HD</model>
+			<model id="26" manufacturer="Mares">Mares Icon HD Net Ready</model>
+			<model id="27" manufacturer="Mares">Mares M1</model>
+			<model id="28" manufacturer="Mares">Mares M2</model>
+			<model id="29" manufacturer="Mares">Mares Matrix</model>
+			<model id="30" manufacturer="Mares">Mares Nemo</model>
+			<model id="31" manufacturer="Mares">Mares Nemo Air</model>
+			<model id="32" manufacturer="Mares">Mares Nemo Apneist</model>
+			<model id="33" manufacturer="Mares">Mares Nemo Excel</model>
+			<model id="34" manufacturer="Mares">Mares Nemo Wide</model>
+			<model id="35" manufacturer="Mares">Mares Nemo Wide 2</model>
+			<model id="36" manufacturer="Mares">Mares Puck</model>
+			<model id="37" manufacturer="Mares">Mares Puck Air</model>
+			<model id="38" manufacturer="Mares">Mares Puck Pro</model>
+			<model id="39" manufacturer="Oceanic">Oceanic Atom 1.0</model>
+			<model id="40" manufacturer="Oceanic">Oceanic Atom 2.0</model>
+			<model id="41" manufacturer="Oceanic">Oceanic Atom 3.0</model>
+			<model id="42" manufacturer="Oceanic">Oceanic Atom 3.1</model>
+			<model id="43" manufacturer="Oceanic">Oceanic Datamask</model>
+			<model id="44" manufacturer="Oceanic">Oceanic Geo</model>
+			<model id="45" manufacturer="Oceanic">Oceanic Geo 2.0</model>
+			<model id="46" manufacturer="Oceanic">Oceanic OC1</model>
+			<model id="47" manufacturer="Oceanic">Oceanic OC1</model>
+			<model id="48" manufacturer="Oceanic">Oceanic OCS</model>
+			<model id="49" manufacturer="Oceanic">Oceanic Pro Plus 2</model>
+			<model id="50" manufacturer="Oceanic">Oceanic Pro Plus 2.1</model>
+			<model id="51" manufacturer="Oceanic">Oceanic VT 4.1</model>
+			<model id="52" manufacturer="Oceanic">Oceanic VT Pro</model>
+			<model id="53" manufacturer="Oceanic">Oceanic VT3</model>
+			<model id="54" manufacturer="Oceanic">Oceanic VT4</model>
+			<model id="55" manufacturer="Oceanic">Oceanic Veo 1.0</model>
+			<model id="56" manufacturer="Oceanic">Oceanic Veo 180</model>
+			<model id="57" manufacturer="Oceanic">Oceanic Veo 2.0</model>
+			<model id="58" manufacturer="Oceanic">Oceanic Veo 200</model>
+			<model id="59" manufacturer="Oceanic">Oceanic Veo 250</model>
+			<model id="60" manufacturer="Oceanic">Oceanic Veo 3.0</model>
+			<model id="61" manufacturer="Oceanic">Oceanic Versa Pro</model>
+			<model id="62" manufacturer="Reefnet">Reefnet Sensus</model>
+			<model id="63" manufacturer="Reefnet">Reefnet Sensus Pro</model>
+			<model id="64" manufacturer="Reefnet">Reefnet Sensus Ultra</model>
+			<model id="65" manufacturer="Seemann">Seemann XP5</model>
+			<model id="66" manufacturer="Shearwater">Shearwater Petrel</model>
+			<model id="67" manufacturer="Shearwater">Shearwater Predator</model>
+			<model id="68" manufacturer="Sherwood">Sherwood Insight</model>
+			<model id="69" manufacturer="Sherwood">Sherwood Insight 2</model>
+			<model id="70" manufacturer="Sherwood">Sherwood Wisdom</model>
+			<model id="71" manufacturer="Sherwood">Sherwood Wisdom 2</model>
+			<model id="72" manufacturer="Sherwood">Sherwood Wisdom 3</model>
+			<model id="73" manufacturer="Suunto">Suunto Cobra</model>
+			<model id="74" manufacturer="Suunto">Suunto Cobra 2</model>
+			<model id="75" manufacturer="Suunto">Suunto Cobra 3</model>
+			<model id="76" manufacturer="Suunto">Suunto D3</model>
+			<model id="77" manufacturer="Suunto">Suunto D4</model>
+			<model id="78" manufacturer="Suunto">Suunto D4i</model>
+			<model id="79" manufacturer="Suunto">Suunto D6</model>
+			<model id="80" manufacturer="Suunto">Suunto D6i</model>
+			<model id="81" manufacturer="Suunto">Suunto D9</model>
+			<model id="82" manufacturer="Suunto">Suunto D9tx</model>
+			<model id="83" manufacturer="Suunto">Suunto Eon</model>
+			<model id="84" manufacturer="Suunto">Suunto Gekko</model>
+			<model id="85" manufacturer="Suunto">Suunto HelO2</model>
+			<model id="86" manufacturer="Suunto">Suunto Mosquito</model>
+			<model id="87" manufacturer="Suunto">Suunto Solution</model>
+			<model id="88" manufacturer="Suunto">Suunto Solution Alpha</model>
+			<model id="89" manufacturer="Suunto">Suunto Solution Nitrox</model>
+			<model id="90" manufacturer="Suunto">Suunto Spyder</model>
+			<model id="91" manufacturer="Suunto">Suunto Stinger</model>
+			<model id="92" manufacturer="Suunto">Suunto Vyper</model>
+			<model id="93" manufacturer="Suunto">Suunto Vyper 2</model>
+			<model id="94" manufacturer="Suunto">Suunto Vyper Air</model>
+			<model id="95" manufacturer="Suunto">Suunto Vytec</model>
+			<model id="96" manufacturer="Suunto">Suunto Zoop</model>
+			<model id="97" manufacturer="Tusa">Tusa Element II (IQ-750)</model>
+			<model id="98" manufacturer="Tusa">Tusa Zen (IQ-900)</model>
+			<model id="99" manufacturer="Tusa">Tusa Zen Air (IQ-950)</model>
+			<model id="100" manufacturer="Uwatec">Uwatec Aladin</model>
+			<model id="101" manufacturer="Uwatec">Uwatec Aladin Tec</model>
+			<model id="102" manufacturer="Uwatec">Uwatec Aladin Tec 2G</model>
+			<model id="103" manufacturer="Uwatec">Uwatec Galileo</model>
+			<model id="104" manufacturer="Uwatec">Uwatec Galileo Trimix</model>
+			<model id="105" manufacturer="Uwatec">Uwatec Memomouse</model>
+			<model id="106" manufacturer="Uwatec">Uwatec Smart Com</model>
+			<model id="107" manufacturer="Uwatec">Uwatec Smart Pro</model>
+			<model id="108" manufacturer="Uwatec">Uwatec Smart Tec</model>
+			<model id="109" manufacturer="Uwatec">Uwatec Smart Z</model>
+			<model id="110" manufacturer="Zeagle">Zeagle N2iTiON3</model>
+        </models>
+    </driver>
+</plugin>

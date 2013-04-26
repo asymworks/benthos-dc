@@ -31,9 +31,50 @@
 # WITH THE SOFTWARE.
 #
 
-# C Flags
-add_definitions( -std=gnu99 -fPIC -g )
+# Find libdivecomputer
+find_package(PkgConfig)
+if (NOT PKG_CONFIG_FOUND)
+	message(FATAL ERROR "pkg-config was not found.  Please install pkg-config before building benthos-dc")
+endif (NOT PKG_CONFIG_FOUND)
 
-# Build the plugins
-add_subdirectory(libdc)
-add_subdirectory(smart)
+pkg_check_modules(LIBDC REQUIRED libdivecomputer)
+if (NOT LIBDC_FOUND)
+	message(FATAL_ERROR "libdivecomputer not found.  Please install libdivecomputer before building benthos-dc")
+endif (NOT LIBDC_FOUND)
+
+include_directories(${LIBDC_INCLUDE_DIRS})
+
+# Build the Backend Generator
+add_executable(_dumpbackends _dumpbackends.c)
+target_link_libraries(_dumpbackends ${LIBDC_LDFLAGS})
+
+# Build the Plugin Files
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/libdc_devices.c
+	COMMAND ${CMAKE_CURRENT_BINARY_DIR}/_dumpbackends | ${CMAKE_CURRENT_SOURCE_DIR}/_genfiles.py ${CMAKE_CURRENT_SOURCE_DIR}/libdc_devices.c ${CMAKE_CURRENT_SOURCE_DIR}/libdc.xml
+	DEPENDS _dumpbackends _genfiles.py
+	COMMENT "Regenerating devices table..."
+)
+
+# Build the LibDiveComputer Plugin
+add_library(libdc SHARED
+	benthosdc_libdc.c
+	libdc_devices.c
+	libdc_driver.c
+	libdc_parser.c
+	$<TARGET_OBJECTS:common_module>
+)
+
+# Link the Uwatec Smart Plugin
+target_link_libraries(libdc
+	${LIBDC_LDFLAGS}
+)
+
+# Package the Uwatec Smart Plugin
+install(TARGETS libdc
+	LIBRARY DESTINATION ${BENTHOS_DC_PLUGINDIR}
+	ARCHIVE DESTINATION ${BENTHOS_DC_SPLUGINDIR}
+)
+
+# Install Manifest
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/libdc.xml DESTINATION ${BENTHOS_DC_DATADIR}/plugins)

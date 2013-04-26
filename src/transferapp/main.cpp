@@ -472,12 +472,6 @@ void parse_header(void * userdata, uint8_t token, int32_t value, uint8_t index, 
 		xmlNewChild(_data->appdata, NULL, BAD_CAST n, BAD_CAST buf);
 		break;
 	}
-
-	case DIVE_HEADER_TOKEN:
-	{
-		_data->cur_tok = name;
-		break;
-	}
 	}
 }
 
@@ -575,7 +569,7 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 		_data.cur_waypoint = 0;
 
 		_data.cur_ts = 0;
-		_data.cur_tok = "";
+		_data.cur_tok = it->second;
 
 		_data.mixes.clear();
 		_data.tanks.clear();

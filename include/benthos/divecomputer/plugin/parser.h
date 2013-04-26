@@ -72,7 +72,6 @@ enum
 	DIVE_HEADER_PMO2,				///< Gas Mixture O2 concentration (permille)
 	DIVE_HEADER_PMHe,				///< Gas Mixture He concentration (permille)
 	DIVE_HEADER_VENDOR,				///< Vendor-Defined Data
-	DIVE_HEADER_TOKEN,				///< Dive Computer Token
 };
 
 /**

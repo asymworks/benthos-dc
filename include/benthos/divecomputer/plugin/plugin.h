@@ -57,6 +57,7 @@ extern "C" {
 #define DRIVER_ERR_HANDSHAKE	-6		///< Error in Device Handshake
 #define DRIVER_ERR_UNSUPPORTED	-7		///< Unsupported Device or Operation
 #define DRIVER_ERR_CANCELLED	-8		///< Operation Cancelled
+#define DRIVER_ERR_PARSER		-9		///< Parser Error
 /*@}*/
 
 /**
