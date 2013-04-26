@@ -49,6 +49,23 @@ extern "C" {
 typedef struct device_t *		dev_handle_t;
 
 /**
+ * @brief Driver Device Data Callback
+ * @param[in] User Data Pointer
+ * @param[in] Device Model Number
+ * @param[in] Device Serial Number
+ * @param[in] Device Tick Count
+ * @param[out] Transfer Token
+ * @return Error Code or 0 to Continue
+ *
+ * This function is called by the driver when it has connected to a device and
+ * has received device information.  The client application should use this
+ * information to lookup a token for the device.  If the client cannot process
+ * data for this device it should return a non-zero error code which will
+ * cancel the transfer (if possible).
+ */
+typedef int (* device_callback_fn_t)(void *, uint8_t, uint32_t, uint32_t, const char **);
+
+/**
  * @brief Data Transfer Callback
  * @param[in] User Data Pointer
  * @param[in] Current Number of Bytes Transferred
@@ -62,8 +79,9 @@ typedef void (* transfer_callback_fn_t)(void *, uint32_t, uint32_t, int *);
  * @param[in] User Data Pointer
  * @param[in] Dive Data Buffer
  * @param[in] Size of the Data Buffer
+ * @param[in] Token for this Dive
  */
-typedef void (* divedata_callback_fn_t)(void *, void *, uint32_t);
+typedef void (* divedata_callback_fn_t)(void *, void *, uint32_t, const char *);
 
 /**
  * @brief Create a Device Handle
@@ -110,86 +128,27 @@ typedef const char * (* plugin_driver_name_fn_t)(dev_handle_t);
 typedef const char * (* plugin_driver_errmsg_fn_t)(dev_handle_t);
 
 /**
- * @brief Get the Device Model Number
- * @param[in] Device Handle
- * @return Model Number
- *
- * If the operation is unsupported or if there is an error retrieving the
- * model number, the return value will be (uint8_t)(-1) or 255.
- */
-typedef uint8_t (* plugin_driver_get_model_fn_t)(dev_handle_t);
-
-/**
- * @brief Get the Device Serial Number
- * @param[in] Device Handle
- * @return Serial Number
- *
- * If the operation is unsupported or if there is an error retrieving the
- * serial number, the return value will be (uint32_t)(-1) or 4294967295.
- */
-typedef uint32_t (* plugin_driver_get_serial_fn_t)(dev_handle_t);
-
-/**
- * @brief Get the Device Tick Count
- * @param[in] Device Handle
- * @return Tick Count
- *
- * If the operation is unsupported or if there is an error retrieving the
- * tick count, the return value will be (uint32_t)(-1) or 4294967295.
- */
-typedef uint32_t (* plugin_driver_get_ticks_fn_t)(dev_handle_t);
-
-/**
- * @brief Return a new Transfer Token
- * @param[in] Device Handle
- * @return Transfer Token
- *
- * If transfer tokens are unsupported by this driver or if there is an error
- * creating the transfer token, the return value is NULL.  The returned token
- * is created via strdup() so the caller should call free() on the returned
- * pointer when it is finished.
- */
-typedef char * (* plugin_driver_issue_token_fn_t)(dev_handle_t);
-
-/**
- * @brief Set the Transfer Token for the Device
- * @param[in] Device Handle
- * @param[in] Transfer Token
- * @return Error value or 0 for success
- *
- * If transfer tokens are unsupported by the driver, the return value will
- * be DRIVER_ERROR_UNSUPPORTED.  This function must be called prior to calling
- * driver_get_length() and driver_transfer().
- */
-typedef int (* plugin_driver_set_token_fn_t)(dev_handle_t, const char *);
-
-/**
- * @brief Get the Number of Bytes to be Transferred
- * @param[in] Device Handle
- * @param[out] Number of Bytes
- * @return Error value or 0 for success
- */
-typedef int (* plugin_driver_get_length_fn_t)(dev_handle_t, uint32_t *);
-
-/**
  * @brief Transfer bytes from the Dive Computer
  * @param[in] Device Handle
- * @param[in] Data Buffer
- * @param[in] Buffer Size
- * @param[in] Callback Function Pointer
+ * @param[out] Data Buffer
+ * @param[out] Buffer Size
+ * @param[in] Device Data Callback Function Pointer
+ * @param[in] Transfer Progress Callback Function Pointer
  * @param[in] Callback Function User Data
  * @return Error value or 0 for success
  *
  * Transfers data from the dive computer and stores it in the given buffer.  The
- * caller is responsible for allocating and freeing the data buffer.  The data
- * buffer size and size argument must equal the number of bytes returned by the
- * driver_get_length() call.
+ * caller is responsible freeing the data buffer after it has been filled by
+ * the transfer function.
  *
- * The callback function will be called before data transfer starts, periodically
- * during transfer, and once when all bytes have been transferred.  The callback
- * may be NULL.
+ * The device data callback function will be called once before data is
+ * transferred to allow the client to set a token.  The progress callback
+ * function will be called before data transfer starts, periodically during
+ * transfer, and once when all bytes have been transferred.
+ *
+ * The callbacks may be NULL.
  */
-typedef int (* plugin_driver_transfer_fn_t)(dev_handle_t, void *, uint32_t, transfer_callback_fn_t, void *);
+typedef int (* plugin_driver_transfer_fn_t)(dev_handle_t, void **, uint32_t *, device_callback_fn_t, transfer_callback_fn_t, void *);
 
 /**
  * @brief Extract Dives from the Transferred Data

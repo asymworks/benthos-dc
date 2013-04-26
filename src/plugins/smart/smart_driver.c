@@ -131,7 +131,6 @@ int smart_driver_create(dev_handle_t * abstract)
 	sd->epname = NULL;
 	sd->lsap = 1;
 	sd->csize = 4;
-	sd->token = 0;
 	sd->tcorr = 0;
 
 	*dev = sd;
@@ -311,135 +310,87 @@ const char * smart_driver_errmsg(dev_handle_t abstract)
 	return dev->errmsg;
 }
 
-uint8_t smart_driver_get_model(dev_handle_t abstract)
+int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size, device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata)
 {
 	smart_device_t dev = (smart_device_t)(abstract);
-
-	if (dev == NULL)
-		return (uint8_t)(-1);
-
-	return dev->model;
-}
-
-uint32_t smart_driver_get_serial(dev_handle_t abstract)
-{
-	smart_device_t dev = (smart_device_t)(abstract);
-
-	if (dev == NULL)
-		return (uint32_t)(-1);
-
-	return dev->serial;
-}
-
-uint32_t smart_driver_get_ticks(dev_handle_t abstract)
-{
-	smart_device_t dev = (smart_device_t)(abstract);
-
-	if (dev == NULL)
-		return (uint32_t)(-1);
-
-	return dev->ticks;
-}
-
-char * smart_driver_issue_token(dev_handle_t abstract)
-{
-	smart_device_t dev = (smart_device_t)(abstract);
-
-	if (dev == NULL)
-		return NULL;
-
-	uint32_t ticks;
-	int rc = smart_read_ulong(dev, "\x1a", & ticks);
-	if (rc != 0)
-		return NULL;
-
-	char buf[20];
-	rc = sprintf(buf, "%u", ticks);
-	if (rc <= 0)
-	{
-		dev->errcode = rc;
-		dev->errmsg = strerror(rc);
-		return NULL;
-	}
-
-	return strdup(buf);
-}
-
-int smart_driver_set_token(dev_handle_t abstract, const char * token)
-{
-	smart_device_t dev = (smart_device_t)(abstract);
-
 	if (dev == NULL)
 	{
 		errno = EINVAL;
 		return -1;
 	}
 
-	int rc = sscanf(token, "%u", & dev->token);
-	if (rc != 1)
+	// Send the Device Callback and retrieve the Token
+	const char * stoken = 0;
+	uint32_t token = 0;
+	int rc;
+
+	if (dcb != NULL)
 	{
-		dev->errcode = rc;
-		dev->errmsg = "Failed to parse Token String";
-		return -1;
+		rc = dcb(userdata, dev->model, dev->serial, dev->ticks, & stoken);
+		if (rc != DRIVER_ERR_SUCCESS)
+		{
+			dev->errcode = rc;
+			dev->errmsg = "Error in Driver Callback";
+			return -1;
+		}
+
+		// Unpack the Token String
+		rc = sscanf(stoken, "%u", & token);
+		if (rc != 1)
+		{
+			dev->errcode = DRIVER_ERR_INVALID;
+			dev->errmsg = "Failed to parse Token String";
+			return -1;
+		}
 	}
 
-	return 0;
-}
-
-int smart_driver_get_length(dev_handle_t abstract, uint32_t * length)
-{
-	smart_device_t dev = (smart_device_t)(abstract);
-
-	if (dev == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
-
-	unsigned char cmd[] = { 0xc6, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
-	* (uint32_t *)(& cmd[1]) = dev->token;
-
-	int rc = smart_driver_cmd(dev, cmd, 9, (unsigned char *)(length), 4);
+	// Read the Transfer Length
+	unsigned char cmd1[] = { 0xc6, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
+	* (uint32_t *)(& cmd1[1]) = token;
+	rc = smart_driver_cmd(dev, cmd1, 9, (unsigned char *)(size), 4);
 	if (rc != 0)
 		return -1;
 
-	return 0;
-}
+	if (* size == 0)
+		return 0;
 
-int smart_driver_transfer(dev_handle_t abstract, void * buffer, uint32_t size, transfer_callback_fn_t cb, void * userdata)
-{
-	smart_device_t dev = (smart_device_t)(abstract);
-
-	if (dev == NULL)
+	// Allocate the Data Buffer
+	(* buffer) = malloc(* size);
+	if (* buffer == NULL)
 	{
-		errno = EINVAL;
+		dev->errcode = DRIVER_ERR_INVALID;
+		dev->errmsg = "Unable to allocate transfer data buffer";
 		return -1;
 	}
 
-	unsigned char cmd[] = { 0xc4, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
+	unsigned char cmd2[] = { 0xc4, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
 	int timeout = 0;
 	int cancel = 0;
-	uint32_t len = size;
+	uint32_t len = (* size);
 	uint32_t nb;
 	uint32_t pos;
 
-	* (uint32_t *)(& cmd[1]) = dev->token;
+	* (uint32_t *)(& cmd2[1]) = token;
 
-	// Read the Transfer Length
-	int rc = smart_driver_cmd(dev, cmd, 9, (unsigned char *)(& nb), 4);
+	// Begin the Data Transfer
+	rc = smart_driver_cmd(dev, cmd2, 9, (unsigned char *)(& nb), 4);
 	if (rc != 0)
 		return -1;
 
-	if (nb != size + 4)
+	if (nb != (* size) + 4)
 	{
+		free(* buffer);
+		(* buffer) = 0;
+		(* size) = 0;
+
 		dev->errcode = DRIVER_ERR_INVALID;
 		dev->errmsg = "Data Length Mismatch in smart_driver_transfer";
 		return -1;
 	}
 
 	// Start Transfer
-	if (cb != NULL)
-		cb(userdata, 0, size, & cancel);
+	if (pcb != NULL)
+		pcb(userdata, 0, (* size), & cancel);
 
 	if (cancel)
 	{
@@ -458,7 +409,7 @@ int smart_driver_transfer(dev_handle_t abstract, void * buffer, uint32_t size, t
 		else
 			nt = len;
 
-		rc = irda_socket_read(dev->s, & ((unsigned char *)buffer)[pos], & nt, & timeout);
+		rc = irda_socket_read(dev->s, & ((unsigned char *)(* buffer))[pos], & nt, & timeout);
 		if (rc != 0)
 		{
 			dev->errcode = DRIVER_ERR_READ;
@@ -476,8 +427,8 @@ int smart_driver_transfer(dev_handle_t abstract, void * buffer, uint32_t size, t
 		len -= nt;
 		pos += nt;
 
-		if (cb != NULL)
-			cb(userdata, pos, size, & cancel);
+		if (pcb != NULL)
+			pcb(userdata, pos, (* size), & cancel);
 
 		if (cancel)
 		{
@@ -503,8 +454,10 @@ int smart_driver_extract(dev_handle_t abstract, void * buffer, uint32_t size, di
 
 	unsigned char * data = (unsigned char *)buffer;
 
+	char token[20];
 	uint8_t hdr[4] = { 0xa5, 0xa5, 0x5a, 0x5a };
 	uint32_t dlen = 0;
+	uint32_t tok = 0;
 	uint32_t pos = 0;
 
 	while (pos < size)
@@ -524,8 +477,11 @@ int smart_driver_extract(dev_handle_t abstract, void * buffer, uint32_t size, di
 			return -1;
 		}
 
+		tok = * (uint32_t *)(& data[pos + 8]);
+		sprintf(token, "%u", tok);
+
 		if (cb != NULL)
-			cb(userdata, & data[pos], dlen);
+			cb(userdata, & data[pos], dlen, token);
 
 		pos += dlen;
 	}

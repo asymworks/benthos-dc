@@ -36,12 +36,6 @@ static const driver_interface_t smart_driver_interface =
 	smart_driver_shutdown,		// driver_shutdown
 	smart_driver_name,			// driver_name
 	smart_driver_errmsg,		// driver_errmsg
-	smart_driver_get_model,		// driver_get_model
-	smart_driver_get_serial,	// driver_get_serial
-	smart_driver_get_ticks,		// driver_get_ticks
-	smart_driver_issue_token,	// driver_issue_token
-	smart_driver_set_token,		// driver_set_token
-	smart_driver_get_length,	// driver_get_length
 	smart_driver_transfer,		// driver_transfer
 	smart_driver_extract,		// driver_extract
 	smart_parser_create,		// parser_create

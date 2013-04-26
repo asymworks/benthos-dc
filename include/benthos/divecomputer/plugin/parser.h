@@ -72,6 +72,7 @@ enum
 	DIVE_HEADER_PMO2,				///< Gas Mixture O2 concentration (permille)
 	DIVE_HEADER_PMHe,				///< Gas Mixture He concentration (permille)
 	DIVE_HEADER_VENDOR,				///< Vendor-Defined Data
+	DIVE_HEADER_TOKEN,				///< Dive Computer Token
 };
 
 /**
@@ -92,14 +93,15 @@ enum
 	DIVE_WAYPOINT_BEARING,			///< Bearing (degrees)
 	DIVE_WAYPOINT_HEADING,			///< Heading (degrees)
 	DIVE_WAYPOINT_VENDOR,			///< Vendor-Defined Data
+	DIVE_WAYPOINT_FLAG,				///< Vendor-Defined Flag
 };
 
 /**
  * @brief Dive Header Callback Function
  * @param[in] Token Type
  * @param[in] Token Value
- * @param[in] Tank or Mix Index
- * @param[in] Vendor Key Name
+ * @param[in] Tank, Mix, or Flag Index
+ * @param[in] Vendor Key or Flag Name
  */
 typedef void (* header_callback_fn_t)(void *, uint8_t, int32_t, uint8_t, const char *);
 

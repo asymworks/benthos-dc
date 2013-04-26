@@ -64,8 +64,9 @@ namespace po = boost::program_options;
 
 using namespace benthos::dc;
 
-typedef std::vector<uint8_t>		dive_buffer_t;
-typedef std::list<dive_buffer_t>	dive_data_t;
+typedef std::vector<uint8_t>					dive_buffer_t;
+typedef std::pair<dive_buffer_t, std::string>	dive_entry_t;
+typedef std::list<dive_entry_t>					dive_data_t;
 
 void listDrivers()
 {
@@ -119,6 +120,61 @@ std::string tokenFilePath(const std::string & driver, uint32_t serial, const std
 	tokenpath /= filename;
 
 	return tokenpath.native();
+}
+
+typedef struct {
+	Driver::Ptr		dev;
+
+	bool			quiet;
+	std::string		device_path;
+	std::string		token_file;
+	std::string		token_path;
+	std::string		token;
+
+} app_data;
+
+int device_info(void * userdata, uint8_t model, uint32_t serial, uint32_t ticks, const char ** token_)
+{
+	app_data * a = (app_data *)(userdata);
+	if (a == NULL)
+		return -1;
+
+	if (! a->quiet)
+	{
+		std::string mfg = a->dev->manufacturer(model);
+		std::cout << "Opened ";
+		if (! mfg.empty())
+			std::cout << mfg << " ";
+		std::cout << a->dev->model_name(model) << " (sn: " << serial << ")";
+		if (! a->device_path.empty())
+			std::cout << " on " << a->device_path;
+		std::cout << std::endl;
+	}
+
+	// Load the Transfer Token
+	std::string token;
+	a->token_file = tokenFilePath(a->dev->name(), serial, a->token_path);
+	if (! a->token.empty())
+	{
+		token = a->token;
+		if (! a->quiet)
+			std::cout << "Using token " << token << " from command line" << std::endl;
+	}
+	else
+	{
+		std::ifstream f(a->token_file);
+		f >> token;
+		f.close();
+
+		if (! token.empty() && ! a->quiet)
+			std::cout << "Loaded token " << token << " from " << a->token_file << std::endl;
+	}
+
+	// Set the Transfer Token
+	if (! token.empty())
+		(* token_) = token.c_str();
+
+	return 0;
 }
 
 #define PB_WIDTH	60
@@ -198,6 +254,12 @@ typedef struct
 	int								rgid;			///< Repetition Group Id
 	int								did;			///< Dive Id
 
+	time_t							cur_ts;			///< Current Timestamp
+	std::string						cur_tok;		///< Current Token
+
+	time_t							last_ts;		///< Most Recent Timestamp
+	std::string						last_tok;		///< Most Recent Token
+
 } parser_data;
 
 void parse_header(void * userdata, uint8_t token, int32_t value, uint8_t index, const char * name)
@@ -227,6 +289,7 @@ void parse_header(void * userdata, uint8_t token, int32_t value, uint8_t index, 
 	case DIVE_HEADER_START_TIME:
 	{
 		st = (time_t)value;
+		_data->cur_ts = st;
 		struct tm * tmp;
 		tmp = gmtime(& st);
 		strftime(buf, 255, "%Y-%m-%dT%H:%M:%S", tmp);
@@ -409,6 +472,12 @@ void parse_header(void * userdata, uint8_t token, int32_t value, uint8_t index, 
 		xmlNewChild(_data->appdata, NULL, BAD_CAST n, BAD_CAST buf);
 		break;
 	}
+
+	case DIVE_HEADER_TOKEN:
+	{
+		_data->cur_tok = name;
+		break;
+	}
 	}
 }
 
@@ -452,7 +521,7 @@ void parse_profile(void * userdata, uint8_t token, int32_t value, uint8_t index,
 	}
 }
 
-void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfile, bool hdr_only)
+void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfile, std::string & token, bool hdr_only)
 {
 	parser_data _data;
 
@@ -495,6 +564,9 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 	_data.rgid = 0;
 	_data.did = 0;
 
+	_data.last_ts = 0;
+	_data.last_tok = "";
+
 	// Parse the Dives
 	dive_data_t::const_iterator it;
 	for (it = dives.begin(); it != dives.end(); it++)
@@ -502,10 +574,13 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 		_data.cur_profile = 0;
 		_data.cur_waypoint = 0;
 
+		_data.cur_ts = 0;
+		_data.cur_tok = "";
+
 		_data.mixes.clear();
 		_data.tanks.clear();
 
-		driver->parse(* it, & parse_header, & parse_profile, & _data);
+		driver->parse(it->first, & parse_header, & parse_profile, & _data);
 		xmlAddChild(_data.repgrp, _data.cur_profile);
 
 		// Process Tank Mixes
@@ -548,6 +623,12 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 				}
 			}
 		}
+
+		if (_data.cur_ts > _data.last_ts)
+		{
+			_data.last_ts = _data.cur_ts;
+			_data.last_tok = _data.cur_tok;
+		}
 	}
 
 	// Save the Gas Definitions
@@ -577,6 +658,9 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 	// Release Resources
 	xmlFreeDoc(_data.doc);
 	xmlCleanupParser();
+
+	// Return Token
+	token = _data.last_tok;
 }
 
 int main(int argc, char ** argv)
@@ -703,69 +787,52 @@ int main(int argc, char ** argv)
 		return 1;
 	}
 
-	if (! quiet)
-	{
-		std::string mfg = dev->manufacturer();
-		std::cout << "Opened ";
-		if (! mfg.empty())
-			std::cout << mfg << " ";
-		std::cout << dev->model_name() << " (sn: " << dev->serial_number() << ")";
-		if (vm.count("device"))
-			std::cout << " on " << device_path;
-		std::cout << std::endl;
-	}
+	// Setup the Device Callback Data
+	app_data appdata;
+	appdata.dev = dev;
+	appdata.quiet = quiet;
+	appdata.device_path = device_path;
+	appdata.token_file = "";
 
-	// Load the Transfer Token
-	std::string token;
-	std::string token_path;
 	if (vm.count("token-path"))
-		token_path = vm["token-path"].as<std::string>();
+		appdata.token_path = vm["token-path"].as<std::string>();
 
-	std::string tokenfile = tokenFilePath(driver_name, dev->serial_number(), token_path);
 	if (vm.count("token"))
-	{
-		token = vm["token"].as<std::string>();
-		if (! quiet)
-			std::cout << "Using token " << token << " from command line" << std::endl;
-	}
-	else
-	{
-		std::ifstream f(tokenfile);
-		f >> token;
-		f.close();
-
-		if (! token.empty() && ! quiet)
-			std::cout << "Loaded token " << token << " from " << tokenfile << std::endl;
-	}
-
-	// Set the Transfer Token
-	if (! token.empty())
-		dev->set_token(token);
+		appdata.token = vm["token"].as<std::string>();
 
 	// Allocate storage for transferred data
 	dive_data_t dive_data;
 
-	// Get Transfer Length
-	uint32_t len = dev->transfer_length();
-	if (len > 0)
+	// Run the Transfer
+	transfer_callback_fn_t cb = NULL;
+	if (! quiet)
+		cb = & progress_bar;
+
+	dive_data = dev->transfer(& device_info, cb, & appdata);
+	if (dive_data.size() > 0)
 	{
-		if (! quiet)
-			std::cout << "Going to transfer " << len << " bytes" << std::endl;
-
-		// Run the Transfer
-		transfer_callback_fn_t cb = NULL;
-		if (! quiet)
-			cb = & progress_bar;
-		dive_data = dev->transfer(cb, 0);
-
 		if (! quiet)
 			std::cout << "Transferred " << dive_data.size() << " new dives" << std::endl;
 	}
 	else
 		std::cout << "No new data to transfer" << std::endl;
 
+	std::string token;
+
+	// Parse Dives
+	if (dive_data.size() > 0)
+	{
+		std::string outfile;
+		if (vm.count("output-file"))
+			outfile = vm["output-file"].as<std::string>();
+
+		parseDives(dev, dive_data, outfile, token, honly);
+		if (! quiet && ! outfile.empty())
+			std::cout << "Wrote UDDF dive data to " << outfile << std::endl;
+	}
+
 	// Store the new Transfer Token
-	fs::path tokenpath(tokenfile);
+	fs::path tokenpath(appdata.token_file);
 	fs::path tokendir(tokenpath.parent_path());
 
 	if (! vm.count("no-store-token"))
@@ -775,31 +842,22 @@ int main(int argc, char ** argv)
 			if (! fs::exists(tokendir))
 				fs::create_directories(tokendir);
 
-			token = dev->issue_token();
-			std::ofstream f(tokenpath.native());
-			f << token << std::endl;
-			f.close();
 
-			if (! quiet)
-				std::cout << "Stored token " << token << " to " << tokenfile << std::endl;
+			if (dive_data.size() > 0)
+			{
+				std::ofstream f(tokenpath.native());
+				f << token << std::endl;
+				f.close();
+
+				if (! quiet)
+					std::cout << "Stored token " << token << " to " << appdata.token_file << std::endl;
+			}
 		}
 		catch (std::exception & e)
 		{
 			std::cerr << "Failed to save transfer token to " << tokenpath.native() << std::cerr;
 			std::cerr << e.what() << std::endl;
 		}
-	}
-
-	// Parse Dives
-	if (len > 0)
-	{
-		std::string outfile;
-		if (vm.count("output-file"))
-			outfile = vm["output-file"].as<std::string>();
-
-		parseDives(dev, dive_data, outfile, honly);
-		if (! quiet && ! outfile.empty())
-			std::cout << "Wrote UDDF dive data to " << outfile << std::endl;
 	}
 
 	// Success!

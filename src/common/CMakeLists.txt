@@ -37,6 +37,7 @@ add_definitions( -std=gnu99 -fPIC )
 # Build the Common Objects
 add_library(common_module OBJECT
 	arglist.c
+	base64.c
 	irda.c
 	unpack.c
 )

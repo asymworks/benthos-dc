@@ -71,15 +71,9 @@ std::string Driver::errmsg() const
 	return std::string(m_driver->driver_errmsg(m_device));
 }
 
-std::string Driver::issue_token() const
+std::string Driver::manufacturer(uint8_t model_number)
 {
-	return std::string(m_driver->driver_issue_token(m_device));
-}
-
-std::string Driver::manufacturer() const
-{
-	uint8_t mn = model_number();
-	std::map<int, model_info_t>::const_iterator it = m_manifest->driver_models.find(mn);
+	std::map<int, model_info_t>::const_iterator it = m_manifest->driver_models.find(model_number);
 	if (it != m_manifest->driver_models.end())
 	{
 		return it->second.manuf_name;
@@ -88,10 +82,9 @@ std::string Driver::manufacturer() const
 	return std::string();
 }
 
-std::string Driver::model_name() const
+std::string Driver::model_name(uint8_t model_number)
 {
-	uint8_t mn = model_number();
-	std::map<int, model_info_t>::const_iterator it = m_manifest->driver_models.find(mn);
+	std::map<int, model_info_t>::const_iterator it = m_manifest->driver_models.find(model_number);
 	if (it != m_manifest->driver_models.end())
 	{
 		return it->second.model_name;
@@ -100,9 +93,14 @@ std::string Driver::model_name() const
 	return std::string();
 }
 
-uint8_t Driver::model_number() const
+const std::string & Driver::name() const
 {
-	return m_driver->driver_get_model(m_device);
+	return m_manifest->driver_name;
+}
+
+const std::string & Driver::plugin() const
+{
+	return m_manifest->plugin_name;
 }
 
 void Driver::parse(std::vector<uint8_t> data, header_callback_fn_t hcb, waypoint_callback_fn_t pcb, void * userdata)
@@ -120,51 +118,23 @@ void Driver::parse(std::vector<uint8_t> data, header_callback_fn_t hcb, waypoint
 		throw std::runtime_error("Failed to parse dive profile: " + errmsg());
 }
 
-uint32_t Driver::serial_number() const
+void _benthos_dc_extract_dives_cb(void * userdata, void * data, uint32_t length, const char * token)
 {
-	return m_driver->driver_get_serial(m_device);
+	std::list<dive_entry_t> * dl = (std::list<dive_entry_t> *)(userdata);
+	dl->push_back(std::pair<dive_buffer_t, std::string>(dive_buffer_t((uint8_t *)data, (uint8_t *)(data) + length), token));
 }
 
-void Driver::set_token(const std::string & token) const
+std::list<dive_entry_t> Driver::transfer(device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata) const
 {
-	int rc = m_driver->driver_set_token(m_device, token.c_str());
-	if (rc != 0)
-		throw std::runtime_error("Failed to set Transfer Token: " + errmsg());
-}
+	std::list<dive_entry_t> result;
+	uint32_t tlen = 0;
+	void * data = NULL;
 
-uint32_t Driver::ticks() const
-{
-	return m_driver->driver_get_ticks(m_device);
-}
-
-uint32_t Driver::transfer_length() const
-{
-	uint32_t result;
-	int rc = m_driver->driver_get_length(m_device, & result);
-	if (rc != 0)
-		throw std::runtime_error("Failed to get transfer length: " + errmsg());
-
-	return result;
-}
-
-void _benthos_dc_extract_dives_cb(void * userdata, void * data, uint32_t length)
-{
-	std::list<std::vector<uint8_t> > * dl = (std::list<std::vector<uint8_t> > *)(userdata);
-	dl->push_back(std::vector<uint8_t>((uint8_t *)data, (uint8_t *)(data) + length));
-}
-
-std::list<std::vector<uint8_t> > Driver::transfer(transfer_callback_fn_t cb, void * userdata) const
-{
-	std::list<std::vector<uint8_t> > result;
-	uint32_t tlen = transfer_length();
-	void * data = malloc(tlen);
-	if (data == NULL)
-		throw std::runtime_error("Failed to allocate memory for transfer: " + std::string(strerror(errno)));
-
-	int rc = m_driver->driver_transfer(m_device, data, tlen, cb, userdata);
+	int rc = m_driver->driver_transfer(m_device, & data, & tlen, dcb, pcb, userdata);
 	if (rc != 0)
 	{
-		free(data);
+		if (data != NULL)
+			free(data);
 		throw std::runtime_error("Failed to transfer dive data: " + errmsg());
 	}
 

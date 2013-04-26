@@ -345,6 +345,10 @@ void smart_parse_smart_pro_header(const unsigned char * buffer, int32_t tcorr, h
 
 	time_t dtime = (uint32_le(buffer, 8) + tcorr) / 2;
 
+	char token[20];
+	sprintf(token, "%u", uint32_le(buffer, 8));
+
+	cb(userdata,	DIVE_HEADER_TOKEN,			0,								0,	token);					// Dive Computer Token
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_VENDOR,			uint16_le(buffer, 16),			0,	"alarms");				// Alarms During Dive
 	cb(userdata,	DIVE_HEADER_VENDOR,			buffer[17],						0,	"microbubble_level");	// Microbubble Level
@@ -378,6 +382,10 @@ void smart_parse_galileo_sol_header(const unsigned char * buffer, int32_t tcorr,
 	int16_t utcoff = ((char *)buffer)[16];
 	time_t dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
 
+	char token[20];
+	sprintf(token, "%u", uint32_le(buffer, 8));
+
+	cb(userdata,	DIVE_HEADER_TOKEN,			0,								0,	token);					// Dive Computer Token
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_UTC_OFFSET,		utcoff * 15,					0,	0);						// UTC Offset
 	cb(userdata,	DIVE_HEADER_REPETITION,		buffer[17],						0,	0);						// Repetition Number
@@ -427,6 +435,10 @@ void smart_parse_aladin_tec_header(const unsigned char * buffer, int32_t tcorr, 
 	int16_t utcoff = ((char *)buffer)[16];
 	time_t dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
 
+	char token[20];
+	sprintf(token, "%u", uint32_le(buffer, 8));
+
+	cb(userdata,	DIVE_HEADER_TOKEN,			0,								0,	token);					// Dive Computer Token
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_UTC_OFFSET,		utcoff * 15,					0,	0);						// UTC Offset
 	cb(userdata,	DIVE_HEADER_REPETITION,		buffer[17],						0,	0);						// Repetition Number
@@ -463,6 +475,10 @@ void smart_parse_aladin_tec2g_header(const unsigned char * buffer, int32_t tcorr
 	int16_t utcoff = ((char *)buffer)[16];
 	time_t dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
 
+	char token[20];
+	sprintf(token, "%u", uint32_le(buffer, 8));
+
+	cb(userdata,	DIVE_HEADER_TOKEN,			0,								0,	token);					// Dive Computer Token
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_UTC_OFFSET,		utcoff * 15,					0,	0);						// UTC Offset
 	cb(userdata,	DIVE_HEADER_REPETITION,		buffer[17],						0,	0);						// Repetition Number
@@ -504,6 +520,10 @@ void smart_parse_smart_com_header(const unsigned char * buffer, int32_t tcorr, h
 
 	time_t dtime = (uint32_le(buffer, 8) + tcorr) / 2;
 
+	char token[20];
+	sprintf(token, "%u", uint32_le(buffer, 8));
+
+	cb(userdata,	DIVE_HEADER_TOKEN,			0,								0,	token);					// Dive Computer Token
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_VENDOR,			uint16_le(buffer, 16),			0,	"alarms");				// Alarms During Dive
 	cb(userdata,	DIVE_HEADER_VENDOR,			buffer[17],						0,	"microbubble_level");	// Microbubble Level
@@ -529,6 +549,10 @@ void smart_parse_smart_tec_header(const unsigned char * buffer, int32_t tcorr, h
 
 	time_t dtime = (uint32_le(buffer, 8) + tcorr) / 2;
 
+	char token[20];
+	sprintf(token, "%u", uint32_le(buffer, 8));
+
+	cb(userdata,	DIVE_HEADER_TOKEN,			0,								0,	token);					// Dive Computer Token
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_VENDOR,			uint16_le(buffer, 16),			0,	"alarms");				// Alarms During Dive
 	cb(userdata,	DIVE_HEADER_VENDOR,			buffer[17],						0,	"microbubble_level");	// Microbubble Level
@@ -572,6 +596,10 @@ void smart_parse_smart_z_header(const unsigned char * buffer, int32_t tcorr, hea
 
 	time_t dtime = (uint32_le(buffer, 8) + tcorr) / 2;
 
+	char token[20];
+	sprintf(token, "%u", uint32_le(buffer, 8));
+
+	cb(userdata,	DIVE_HEADER_TOKEN,			0,								0,	token);					// Dive Computer Token
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_VENDOR,			uint16_le(buffer, 16),			0,	"alarms");				// Alarms During Dive
 	cb(userdata,	DIVE_HEADER_VENDOR,			buffer[17],						0,	"microbubble_level");	// Microbubble Level

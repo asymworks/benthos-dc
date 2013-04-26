@@ -45,6 +45,9 @@
 namespace benthos { namespace dc
 {
 
+typedef std::vector<uint8_t>							dive_buffer_t;
+typedef std::pair<dive_buffer_t, std::string>			dive_entry_t;
+
 /**
  * @brief Device Driver Class
  *
@@ -77,29 +80,25 @@ public:
 	//! @return Last Driver Error Message
 	std::string errmsg() const;
 
-	//! @return New Transfer Token
-	std::string issue_token() const;
+	/**
+	 * @brief Get the Manufacturer Name for a Model Number
+	 * @param[in] Model Number
+	 * @return Manufacturer Name
+	 */
+	std::string manufacturer(uint8_t model_number);
 
-	//! @return Manufacturer Name of Connected Device
-	std::string manufacturer() const;
+	/**
+	 * @brief Get the Model Name for a Model Number
+	 * @param[in] Model Number
+	 * @return Model Name
+	 */
+	std::string model_name(uint8_t model_number);
 
-	//! @return Model Name of Connected Device
-	std::string model_name() const;
+	//! @return Driver Name
+	const std::string & name() const;
 
-	//! @return Model Number of Connected Device
-	uint8_t model_number() const;
-
-	//! @return Serial Number of Connected Device
-	uint32_t serial_number() const;
-
-	//! @param[in] Transfer Token
-	void set_token(const std::string & token) const;
-
-	//! @return Dive Computer Tick Count
-	uint32_t ticks() const;
-
-	//! @return Number of Bytes to Transfer
-	uint32_t transfer_length() const;
+	//! @return Plugin Name
+	const std::string & plugin() const;
 
 public:
 
@@ -110,10 +109,11 @@ public:
 	 * @param[in] Profile Data Callback
 	 * @param[in] User Data for Callback
 	 */
-	void parse(std::vector<uint8_t> data, header_callback_fn_t hcb, waypoint_callback_fn_t pcb, void * userdata);
+	void parse(dive_buffer_t data, header_callback_fn_t hcb, waypoint_callback_fn_t pcb, void * userdata);
 
 	/**
 	 * @brief Transfer Dives from the Device
+	 * @param[in] Device Callback Function
 	 * @param[in] Progress Callback Function
 	 * @param[in] User Data for Callback
 	 *
@@ -121,7 +121,7 @@ public:
 	 * The progress callback is called periodically (no guaranteed rate) during
 	 * data transfer to report current transfer progress.
 	 */
-	std::list<std::vector<uint8_t> > transfer(transfer_callback_fn_t cb, void * userdata) const;
+	std::list<dive_entry_t> transfer(device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata) const;
 
 private:
 	const driver_interface_t *			m_driver;

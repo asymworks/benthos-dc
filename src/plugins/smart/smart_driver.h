@@ -71,7 +71,6 @@ struct smart_device_
 	uint8_t			model;		///< Model Number
 	uint32_t		serial;		///< Serial Number
 	uint32_t		ticks;		///< Tick Count
-	uint32_t		token;		///< Token
 };
 
 int smart_driver_create(dev_handle_t * dev);
@@ -82,15 +81,8 @@ const char * smart_driver_name(dev_handle_t dev);
 
 const char * smart_driver_errmsg(dev_handle_t dev);
 
-uint8_t smart_driver_get_model(dev_handle_t dev);
-uint32_t smart_driver_get_serial(dev_handle_t dev);
-uint32_t smart_driver_get_ticks(dev_handle_t dev);
-
-char * smart_driver_issue_token(dev_handle_t dev);
-int smart_driver_set_token(dev_handle_t dev, const char * token);
-
 int smart_driver_get_length(dev_handle_t dev, uint32_t * length);
-int smart_driver_transfer(dev_handle_t dev, void * buffer, uint32_t size, transfer_callback_fn_t cb, void * userdata);
+int smart_driver_transfer(dev_handle_t dev, void ** buffer, uint32_t * size, device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata);
 int smart_driver_extract(dev_handle_t dev, void * buffer, uint32_t size, divedata_callback_fn_t cb, void * userdata);
 
 #ifdef __cplusplus
