@@ -133,7 +133,7 @@ typedef struct {
 
 } app_data;
 
-int device_info(void * userdata, uint8_t model, uint32_t serial, uint32_t ticks, const char ** token_)
+int device_info(void * userdata, uint8_t model, uint32_t serial, uint32_t ticks, char ** token_, int * free_token)
 {
 	app_data * a = (app_data *)(userdata);
 	if (a == NULL)
@@ -172,7 +172,15 @@ int device_info(void * userdata, uint8_t model, uint32_t serial, uint32_t ticks,
 
 	// Set the Transfer Token
 	if (! token.empty())
-		(* token_) = token.c_str();
+	{
+		(* token_) = strdup(token.c_str());
+		(* free_token) = 1;
+	}
+	else
+	{
+		(* token_) = NULL;
+		(* free_token) = 0;
+	}
 
 	return 0;
 }

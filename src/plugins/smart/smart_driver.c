@@ -321,12 +321,13 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 
 	// Send the Device Callback and retrieve the Token
 	const char * stoken = 0;
+	int free_token = 0;
 	uint32_t token = 0;
 	int rc;
 
 	if (dcb != NULL)
 	{
-		rc = dcb(userdata, dev->model, dev->serial, dev->ticks, & stoken);
+		rc = dcb(userdata, dev->model, dev->serial, dev->ticks, & stoken, & free_token);
 		if (rc != DRIVER_ERR_SUCCESS)
 		{
 			dev->errcode = rc;
@@ -334,13 +335,20 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 			return -1;
 		}
 
-		// Unpack the Token String
-		rc = sscanf(stoken, "%u", & token);
-		if (rc != 1)
+		if (stoken != NULL)
 		{
-			dev->errcode = DRIVER_ERR_INVALID;
-			dev->errmsg = "Failed to parse Token String";
-			return -1;
+			// Unpack the Token String
+			rc = sscanf(stoken, "%u", & token);
+			if (rc != 1)
+			{
+				dev->errcode = DRIVER_ERR_INVALID;
+				dev->errmsg = "Failed to parse Token String";
+				return -1;
+			}
+
+			// Free the Token Memory
+			if (free_token)
+				free(stoken);
 		}
 	}
 

@@ -55,6 +55,7 @@ typedef struct device_t *		dev_handle_t;
  * @param[in] Device Serial Number
  * @param[in] Device Tick Count
  * @param[out] Transfer Token
+ * @param[out] Free Transfer Token Memory
  * @return Error Code or 0 to Continue
  *
  * This function is called by the driver when it has connected to a device and
@@ -62,8 +63,14 @@ typedef struct device_t *		dev_handle_t;
  * information to lookup a token for the device.  If the client cannot process
  * data for this device it should return a non-zero error code which will
  * cancel the transfer (if possible).
+ *
+ * The callback function has the option of returning a static character pointer
+ * or a dynamic memory buffer for the transfer token.  If it returns a static
+ * pointer it should set the final argument to 0, otherwise it should allocate
+ * a buffer using malloc() and set the final argument to 1, which will cause the
+ * driver to free the memory.
  */
-typedef int (* device_callback_fn_t)(void *, uint8_t, uint32_t, uint32_t, const char **);
+typedef int (* device_callback_fn_t)(void *, uint8_t, uint32_t, uint32_t, char **, int *);
 
 /**
  * @brief Data Transfer Callback

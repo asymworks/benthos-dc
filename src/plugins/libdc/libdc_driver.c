@@ -126,16 +126,24 @@ static void libdc_event_cb(dc_device_t * device, dc_event_type_t event, const vo
 		{
 			// Get the Token
 			const char * token = NULL;
-			dev->dcb(dev->cb_data, devinfo->model, devinfo->serial, dev->devtime, & token);
+			int free_token = 0;
+			dev->dcb(dev->cb_data, devinfo->model, devinfo->serial, dev->devtime, & token, & free_token);
 
-			// Base64 Decode the Token
-			unsigned char * token_data = NULL;
-			size_t token_size = 0;
-			token_data = base64_decode(token, strlen(token), & token_size);
+			if (token != NULL)
+			{
+				// Base64 Decode the Token
+				unsigned char * token_data = NULL;
+				size_t token_size = 0;
+				token_data = base64_decode(token, strlen(token), & token_size);
 
-			// Set the Token
-			if (token_data != NULL)
-				dc_device_set_fingerprint(dev->device, token_data, token_size);
+				// Set the Token
+				if (token_data != NULL)
+					dc_device_set_fingerprint(dev->device, token_data, token_size);
+
+				// Free Token Data
+				if (free_token)
+					free(token);
+			}
 		}
 		break;
 
