@@ -34,7 +34,7 @@
 #
 
 pkgname=benthos-dc
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="Benthos Scuba Dive Computer Library for C++"
 arch=('i686' 'x86_64')
@@ -47,7 +47,7 @@ conflicts=()
 replaces=()
 backup=()
 source=("http://benthos-log.com/files/${pkgname}-${pkgver}.tar.bz2")
-md5sums=('7e88e2b8d438f2a7730d9fc201e5cb10')
+md5sums=('b0fc6f78c6c1841b7097050f3c2e617a')
 
 build() {
 	cd "${srcdir}/${pkgname}-${pkgver}"

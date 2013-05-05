@@ -1,0 +1,180 @@
+.TH benthos-xfr 1 "May 5, 2013" "version @BENTHOS_DC_VERSION@" "USER COMMANDS"
+.SH NAME
+benthos-xfr \- Command-line utility to transfer data from dive 
+computers with the Benthos Dive Computer library
+.SH SYNOPSIS
+.B benthos-xfr
+--list
+.PP
+.B benthos-xfr 
+[-q|--quiet] [options] [device]
+.PP
+.B benthos-xfr
+[-?|--help|--version]
+.SH DESCRIPTION
+.B benthos-xfr
+is a small command-line utility to transfer dive data 
+from compatible dive computers and other devices and  save it 
+in the Universal Dive Data Format. It has the ability to store 
+tokens associated with each dive computer so that only new data 
+since the previous transfer is downloaded.
+.SH OPTIONS
+.SS General Options
+.TP
+.B -?, --help
+Display a help message and exit
+.TP
+.B --list   
+Display a list of installed plugins and exit
+.TP 
+.B -q, --quiet
+Suppress status messages and the transfer progress indicator
+.TP
+.B -v, --version
+Show the application version information and exit
+.SS Transfer Options
+.TP
+.B -d, --driver=<driver>
+Specify the dive computer device driver name.  This must be one
+of the installed dive computer plugins.  The list of available
+plugins is shown with the 
+.B --list
+command line parameter.
+.TP
+.B --dargs=<arg1:arg2:...>
+Specify a list of arguments to pass to the driver.  The 
+arguments are a list of
+.B key=value
+pairs separated by colons.
+.TP
+.B --device=<device>
+Specify the serial device where the dive computer is connected.
+For IrDA devices, this argument may be omitted.  This may also
+be the last positional argument in the command line.
+.TP
+.B -h, --header-only
+When printing downloaded data, print only header information
+and do not print profile data points.
+.TP
+.B -o, --output-file=<file>
+Save the UDDF data to the specified output file instead of 
+printing to 
+.BR STDOUT .
+.TP
+.B -t, --token=<token>
+Specify a token to use for the transfer.  A token tells the
+dive computer what starting point to use when transferring
+dives; i.e. only dives after a given token will be transferred.
+
+If no token is specified on the command line, it will be loaded
+from a file if available.  If no token is available, all dives
+will be downloaded from the computer. 
+
+To force download of all dives, specify a single hyphen as the
+token parameter.
+.TP
+.B --token-path=<path>
+Specify the location where saved dive computer tokens are 
+stored.  This path defaults to
+.B ${HOME}/.benthos-dc/tokens
+.TP
+.B -U, --no-store-token
+Do not store a new token to the token file after transferring
+dives.  This means that the program will transfer the same 
+dives the next time it is run.
+.SH PLUGINS
+The Benthos Dive Computer library ships with the following dive
+computer plugins.
+.TP
+.B smart (Uwatec Smart Device Driver)
+The
+.B smart
+driver supports Uwatec Smart devices which communicate over the
+IrDA protocol.  Currently this includes the
+.BR "Smart Pro" ,
+.BR "Galileo Sol" ,
+.BR "Aladin Tec" ,
+.BR "Aladin Tec 2G" ,
+.BR "Smart Com" ,
+.BR "Smart Tec" ,
+and
+.BR "Smart Z" .
+
+Since the devices share an identical protocol, the driver does
+not need the
+.I model
+parameter; it will auto-detect the model type when it connects
+to the device.  The driver uses the system-provided IrDA 
+interface, and so will connect to the first available device
+on the IrDA bus.  The driver supports the following options:
+.RS
+.TP
+.B chunk_size=<int>
+Specifies the IrDA transfer chunk size, between 2 and 32 bytes. 
+The default chunk size is 4.  Setting this to a higher number
+can increase transfer speed but may also destabilize the IrDA
+bus depending on your hardware.
+.TP
+.B lsap=<int>
+Specifies the IrDA Link Service Access Point identifier.  The 
+default is 1.
+.TP
+.B timeout=<int>
+Specifies the IrDA timeout, in milliseconds.  A value less than 
+0 indicates blocking I/O.  Default is 2000.
+.RE
+
+The 
+.B smart
+driver supports many more device features than the generic libdc
+driver, including full support for all header data available in
+SmartTrak, automatic translation of some alarm values, and the
+ability to change dive computer settings (in work).
+.TP
+.B libdc (Generic libdivecomputer Driver)
+The
+.B libdc
+driver is a wrapper around the libdivecomputer library written
+by Jef Driesen.  It supports downloading profile data from a 
+wide variety of dive computer devices with basic dive header
+information, including 
+.BR "Entry Time" ,
+.BR "Dive Duration" ,
+.BR "Maximum Depth" ,
+and 
+.BR "Gas Mixture" .
+
+When using the
+.B libdc 
+driver, the
+.I model 
+parameter must always be included to indicate to the
+backend which dive computer protocol to use.  A complete list
+of supported model identifiers is found in the plugin manifest
+file, which is located at 
+.B /usr/share/benthos/plugins/libdc.xml
+or a similar location, depending on your distribution.
+
+Note that the
+.B libdc 
+driver is included primarily as a fallback; for the
+most functionality, it is recommended to use a driver specific
+to your dive computer model.
+.SH EXAMPLES
+.TP
+.B benthos-xfr -d smart -U -h -t -
+Downloads all dives from a Uwatec Smart device, does not store
+a new token, and prints only headers.  Note that since Uwatec
+Smart devices use an IrDA interface, no serial device is set.
+.TP
+.B benthos-xfr -d libdc --dargs=model=95 --device=/dev/ttyS0
+Downloads new dives from a Suunto Vytec computer using the
+generic (libdivecomputer) interface.  
+
+Note that the model number for the Suunto Vytec (95) is found 
+in the plugin manifest file for the libdivecomputer driver.  
+It is typically located at
+.B /usr/share/benthos/plugins/libdc.xml
+or a similar location, depending on your distribution.
+.SH AUTHOR
+J.P. Krauss (jkrauss (at) asymworks.com)

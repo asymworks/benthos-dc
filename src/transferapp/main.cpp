@@ -156,9 +156,17 @@ int device_info(void * userdata, uint8_t model, uint32_t serial, uint32_t ticks,
 	a->token_file = tokenFilePath(a->dev->name(), serial, a->token_path);
 	if (! a->token.empty())
 	{
-		token = a->token;
-		if (! a->quiet)
-			std::cout << "Using token " << token << " from command line" << std::endl;
+		if (a->token != "-")
+		{
+			token = a->token;
+			if (! a->quiet)
+				std::cout << "Using token " << token << " from command line" << std::endl;
+		}
+		else
+		{
+			if (! a->quiet)
+				std::cout << "Skipping token (downloading all dives)" << std::endl;
+		}
 	}
 	else
 	{
