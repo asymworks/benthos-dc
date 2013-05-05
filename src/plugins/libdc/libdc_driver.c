@@ -125,7 +125,7 @@ static void libdc_event_cb(dc_device_t * device, dc_event_type_t event, const vo
 		if (dev->dcb)
 		{
 			// Get the Token
-			const char * token = NULL;
+			char * token = NULL;
 			int free_token = 0;
 			dev->dcb(dev->cb_data, devinfo->model, devinfo->serial, dev->devtime, & token, & free_token);
 
@@ -178,10 +178,8 @@ static int libdc_dive_cb(const unsigned char * data, unsigned int size, const un
 	}
 	else
 	{
-		dive_list_t * c = dev->dives;
-		while (c->next != NULL)
-			c = c->next;
-		c->next = le;
+		le->next = dev->dives;
+		dev->dives = le;
 	}
 
 	return 1;
@@ -370,6 +368,12 @@ int libdc_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 
 	// Set the Callback Data
 	dev->cb_data = userdata;
+
+	/*
+	 * NB: libdc_dive_cb reverses the returned order of dives so that the last dive returned
+	 *     holds the next transfer token.  This is per the universal.c program included with
+	 *     libdivecomputer which takes the _first_ returned token as the next token.
+	 */
 
 	// Transfer and Store the Dives (calls device_callback and transfer_callback internally)
 	dc_status_t rc = dc_device_foreach (dev->device, libdc_dive_cb, dev);
