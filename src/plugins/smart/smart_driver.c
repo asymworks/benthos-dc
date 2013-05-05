@@ -63,10 +63,15 @@ time_t smart_driver_epoch()
 	if (tz_orig)
 		tz_orig = strdup(tz_orig);
 
+	long int tzorig = timezone;
+	int dstorig = daylight;
+
+	timezone = 0;
+	dstorig = 0;
 	setenv("TZ", "UTC", 1);
 	tzset();
 
-	time_t epoch = mktime(& t) * 2;
+	time_t epoch = mktime(& t);
 
 	if (tz_orig)
 	{
@@ -77,6 +82,9 @@ time_t smart_driver_epoch()
 		unsetenv("TZ");
 
 	tzset();
+
+	timezone = tzorig;
+	daylight = dstorig;
 
 	return epoch;
 }

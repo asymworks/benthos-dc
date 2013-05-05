@@ -37,6 +37,10 @@
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */
 
+#include <exception>
+#include <stdexcept>
+
+#include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <benthos/divecomputer/driverclass.hpp>
@@ -47,6 +51,20 @@ namespace benthos { namespace dc
 
 typedef std::vector<uint8_t>							dive_buffer_t;
 typedef std::pair<dive_buffer_t, std::string>			dive_entry_t;
+
+/**
+ * @brief Unsupported Operation Exception
+ *
+ * Exception class for driver operations which are not defined in the plugin
+ * structure or that return DRIVER_ERR_UNSUPPORTED.
+ */
+class UnsupportedOperation: public std::runtime_error
+{
+public:
+	UnsupportedOperation(const std::string & what);
+	UnsupportedOperation(const char * what);
+	virtual ~UnsupportedOperation();
+};
 
 /**
  * @brief Device Driver Class
@@ -105,6 +123,92 @@ public:
 
 	//! @return Plugin Name
 	const std::string & plugin() const;
+
+public:
+
+	/**
+	 * @brief Get the Dive Computer Time of Day
+	 * @return Time of Day in GMT
+	 * @throws UnsupportedOperation
+	 *
+	 * Retrieves the current time of day as shown by the dive computer.  If
+	 * the dive computer does not support retrieving the time of day, an
+	 * UnsupportedOperation exception is raised.
+	 */
+	time_t get_time_of_day() const;
+
+	/**
+	 * @brief Set the Dive Computer Time of Day
+	 * @param[in] Time of Day in GMT
+	 * @throws None
+	 *
+	 * Sets the current time of day as shown by the dive computer.  If the
+	 * dive computer does not support setting the time of day, this method
+	 * is a no-op.
+	 */
+	void set_time_of_day(time_t time) const;
+
+	/**
+	 * @brief Check if the Dive Computer supports a named Setting
+	 * @param[in] Setting Name
+	 * @return Boolean
+	 *
+	 * Checks if the given setting is supported by the dive computer and can
+	 * be read or written.
+	 */
+	bool has_setting(const std::string & name) const;
+
+	/**
+	 * @brief Read a named Setting from the Dive Computer
+	 * @param[in] Setting Name
+	 * @return Setting Value
+	 * @throws UnsupportedOperation
+	 *
+	 * Reads the given named setting from the dive computer.  If the given
+	 * setting is not available, an UnsupportedOperation exception will be
+	 * thrown.  If the setting is not a single value (i.e. is a struct or
+	 * tuple), a std::domain_error is thrown.
+	 */
+	boost::any read_setting(const std::string & name) const;
+
+	/**
+	 * @brief Read a named Tuple from the Dive Computer
+	 * @param[in] Setting Name
+	 * @return Setting Tuple
+	 * @throws UnsupportedOperation
+	 *
+	 * Reads the given named tuple from the dive computer.  If the given
+	 * setting is not available, an UnsupportedOperation exception will be
+	 * thrown.  If the setting is not a struct or tuple, a
+	 * std::domain_error is thrown.
+	 */
+	std::list<boost::any> read_tuple(const std::string & name) const;
+
+	/**
+	 * @brief Write a named Setting to the Dive Computer
+	 * @param[in] Setting Name
+	 * @param[in] Setting Value
+	 * @throws UnsupportedOperation
+	 *
+	 * Writes the given named setting to the dive computer.  If the given
+	 * setting is not available, an UnsupportedOperation exception will be
+	 * thrown.  If the value is not valid, a domain_error exception will be
+	 * thrown.
+	 */
+	void write_setting(const std::string & name, const boost::any & value) const;
+
+	/**
+	 * @brief Write a named Tuple to the Dive Computer
+	 * @param[in] Setting Name
+	 * @param[in] Setting Tuple Value
+	 * @throws UnsupportedOperation
+	 *
+	 * Writes the given named tuple to the dive computer.  If the given
+	 * setting is not available, an UnsupportedOperation exception will be
+	 * thrown.  If the value is not valid, a domain_error exception will be
+	 * thrown.
+	 */
+	void write_tuple(const std::string & name, const std::list<boost::any> & value) const;
 
 public:
 

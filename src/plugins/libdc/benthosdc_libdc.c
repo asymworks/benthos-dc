@@ -43,6 +43,11 @@ static const driver_interface_t libdc_driver_interface =
 	libdc_parser_reset,			// parser_reset
 	libdc_parser_parse_header,	// parser_parse_header
 	libdc_parser_parse_profile,	// parser_parse_profile
+	0,							// settings_get_tod
+	0,							// settings_set_tod
+	0,							// settings_has
+	0,							// settings_get
+	0,							// settings_set
 };
 
 int plugin_load()

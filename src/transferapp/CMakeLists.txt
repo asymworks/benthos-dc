@@ -62,15 +62,15 @@ target_link_libraries( benthos-xfr
 )
 
 # Create the man page
-configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/benthos-xfr.1.man.in
-	${CMAKE_CURRENT_BINARY_DIR}/benthos-xfr.1.man
-	@ONLY
-)
+#add_custom_command(
+#	OUTPUT benthos-xfr.1.gz
+#	COMMAND gzip ${CMAKE_CURRENT_SOURCE_DIR}/benthos-xfr.1.man > ${CMAKE_CURRENT_BINARY_DIR}/benthos-xfr.1.gz
+#	DEPENDS benthos-xfr.1.man
+#	COMMENT "Generating man page benthos-xfr.1..."
+#)
 
-add_custom_command(
-	TARGET benthos-xfr POST_BUILD
-	COMMAND gzip -c benthos-xfr.1.man > benthos-xfr.1.gz
+add_custom_target( benthos-xfr.1.gz ALL
+	COMMAND gzip -c ${CMAKE_CURRENT_SOURCE_DIR}/benthos-xfr.1.man > ${CMAKE_CURRENT_BINARY_DIR}/benthos-xfr.1.gz
 	DEPENDS benthos-xfr.1.man
 	COMMENT "Generating man page benthos-xfr.1..."
 )

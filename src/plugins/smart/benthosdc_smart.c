@@ -27,6 +27,7 @@
 #include "benthosdc_smart.h"
 #include "smart_driver.h"
 #include "smart_parser.h"
+#include "smart_settings.h"
 
 static const driver_interface_t smart_driver_interface =
 {
@@ -45,6 +46,11 @@ static const driver_interface_t smart_driver_interface =
 	smart_parser_reset,			// parser_reset
 	smart_parser_parse_header,	// parser_parse_header
 	smart_parser_parse_profile,	// parser_parse_profile
+	smart_settings_get_tod,		// settings_get_tod
+	smart_settings_set_tod,		// settings_set_tod
+	0,							// settings_has
+	0,							// settings_get
+	0,							// settings_set
 };
 
 int plugin_load()

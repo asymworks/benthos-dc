@@ -57,19 +57,22 @@ int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, ssize_t cmdlen, un
 		return -1;
 	}
 
-	rc = irda_socket_read(dev->s, ans, & _anslen, & timeout);
-	if (rc != 0)
+	if ((ans != 0) && (_anslen > 0))
 	{
-		dev->errcode = DRIVER_ERR_READ;
-		dev->errmsg = "Failed to read bytes to the Uwatec Smart device";
-		return -1;
-	}
+		rc = irda_socket_read(dev->s, ans, & _anslen, & timeout);
+		if (rc != 0)
+		{
+			dev->errcode = DRIVER_ERR_READ;
+			dev->errmsg = "Failed to read bytes to the Uwatec Smart device";
+			return -1;
+		}
 
-	if (timeout)
-	{
-		dev->errcode = DRIVER_ERR_TIMEOUT;
-		dev->errmsg = "Timed out reading data from the Uwatec Smart device";
-		return -1;
+		if (timeout)
+		{
+			dev->errcode = DRIVER_ERR_TIMEOUT;
+			dev->errmsg = "Timed out reading data from the Uwatec Smart device";
+			return -1;
+		}
 	}
 
 	return 0;
@@ -103,4 +106,64 @@ int smart_read_ulong(smart_device_t dev, const char * cmd, uint32_t * ans)
 int smart_read_slong(smart_device_t dev, const char * cmd, int32_t * ans)
 {
 	return smart_driver_cmd(dev, (unsigned char *)cmd, strlen(cmd), (unsigned char *)ans, 4);
+}
+
+int smart_write_uchar(smart_device_t dev, const char * cmd, uint8_t arg)
+{
+	size_t clen = strlen(cmd);
+	unsigned char * buf = malloc(clen + sizeof(arg));
+	memcpy(buf, cmd, clen);
+	memcpy(buf + clen, & arg, sizeof(arg));
+
+	return smart_driver_cmd(dev, buf, clen + sizeof(arg), 0, 0);
+}
+
+int smart_write_schar(smart_device_t dev, const char * cmd, int8_t arg)
+{
+	size_t clen = strlen(cmd);
+	unsigned char * buf = malloc(clen + sizeof(arg));
+	memcpy(buf, cmd, clen);
+	memcpy(buf + clen, & arg, sizeof(arg));
+
+	return smart_driver_cmd(dev, buf, clen + sizeof(arg), 0, 0);
+}
+
+int smart_write_ushort(smart_device_t dev, const char * cmd, uint16_t arg)
+{
+	size_t clen = strlen(cmd);
+	unsigned char * buf = malloc(clen + sizeof(arg));
+	memcpy(buf, cmd, clen);
+	memcpy(buf + clen, & arg, sizeof(arg));
+
+	return smart_driver_cmd(dev, buf, clen + sizeof(arg), 0, 0);
+}
+
+int smart_write_sshort(smart_device_t dev, const char * cmd, int16_t arg)
+{
+	size_t clen = strlen(cmd);
+	unsigned char * buf = malloc(clen + sizeof(arg));
+	memcpy(buf, cmd, clen);
+	memcpy(buf + clen, & arg, sizeof(arg));
+
+	return smart_driver_cmd(dev, buf, clen + sizeof(arg), 0, 0);
+}
+
+int smart_write_ulong(smart_device_t dev, const char * cmd, uint32_t arg)
+{
+	size_t clen = strlen(cmd);
+	unsigned char * buf = malloc(clen + sizeof(arg));
+	memcpy(buf, cmd, clen);
+	memcpy(buf + clen, & arg, sizeof(arg));
+
+	return smart_driver_cmd(dev, buf, clen + sizeof(arg), 0, 0);
+}
+
+int smart_write_slong(smart_device_t dev, const char * cmd, int32_t arg)
+{
+	size_t clen = strlen(cmd);
+	unsigned char * buf = malloc(clen + sizeof(arg));
+	memcpy(buf, cmd, clen);
+	memcpy(buf + clen, & arg, sizeof(arg));
+
+	return smart_driver_cmd(dev, buf, clen + sizeof(arg), 0, 0);
 }

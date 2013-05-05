@@ -1,4 +1,4 @@
-.TH benthos-xfr 1 "May 5, 2013" "version @BENTHOS_DC_VERSION@" "USER COMMANDS"
+.TH benthos-xfr 1 "May 5, 2013" "" "USER COMMANDS"
 .SH NAME
 benthos-xfr \- Command-line utility to transfer data from dive 
 computers with the Benthos Dive Computer library
@@ -82,6 +82,11 @@ stored.  This path defaults to
 Do not store a new token to the token file after transferring
 dives.  This means that the program will transfer the same 
 dives the next time it is run.
+.TP
+.B -T, --update-time
+Update the dive computer timestamp after transferring data.  If
+the dive computer plugin does not support updating the timestamp
+this flag has no effect.
 .SH PLUGINS
 The Benthos Dive Computer library ships with the following dive
 computer plugins.

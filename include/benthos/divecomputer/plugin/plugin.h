@@ -44,6 +44,7 @@ extern "C" {
 #include <stdint.h>
 #include <benthos/divecomputer/plugin/driver.h>
 #include <benthos/divecomputer/plugin/parser.h>
+#include <benthos/divecomputer/plugin/settings.h>
 
 /**@{
  * @name Driver Error Codes
@@ -87,6 +88,12 @@ typedef struct
 
 	plugin_parser_parse_header_fn_t		parser_parse_header;
 	plugin_parser_parse_profile_fn_t	parser_parse_profile;
+
+	plugin_setting_get_tod_fn_t			settings_get_tod;
+	plugin_setting_set_tod_fn_t			settings_set_tod;
+	plugin_setting_has_fn_t				settings_has;
+	plugin_setting_get_fn_t				settings_get;
+	plugin_setting_set_fn_t				settings_set;
 
 } driver_interface_t;
 

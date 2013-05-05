@@ -36,6 +36,20 @@
 
 using namespace benthos::dc;
 
+UnsupportedOperation::UnsupportedOperation(const char * what)
+	: std::runtime_error(what)
+{
+}
+
+UnsupportedOperation::UnsupportedOperation(const std::string & what)
+	: std::runtime_error(what)
+{
+}
+
+UnsupportedOperation::~UnsupportedOperation()
+{
+}
+
 Driver::Driver(const driver_interface_t * driver, const driver_manifest_t * manifest, const std::string & path, const std::string & args)
 	: m_driver(driver), m_manifest(manifest), m_device(0), m_parser(0)
 {
@@ -71,6 +85,30 @@ std::string Driver::errmsg() const
 	return std::string(m_driver->driver_errmsg(m_device));
 }
 
+time_t Driver::get_time_of_day() const
+{
+	if (! m_driver->settings_get_tod)
+		throw UnsupportedOperation("settings_get_tod is not supported by this backend");
+
+	time_t tod;
+	int ret = m_driver->settings_get_tod(m_device, & tod);
+	if (ret == DRIVER_ERR_UNSUPPORTED)
+		throw UnsupportedOperation("settings_get_tod is not supported by this backend");
+
+	if (ret != DRIVER_ERR_SUCCESS)
+		throw std::runtime_error("Failed to retrieve dive computer time of day: " + std::string(m_driver->driver_errmsg(m_device)));
+
+	return tod;
+}
+
+bool Driver::has_setting(const std::string & name) const
+{
+	if (! m_driver->settings_has)
+		return false;
+
+	return m_driver->settings_has(m_device, name.c_str());
+}
+
 std::string Driver::manufacturer(uint8_t model_number)
 {
 	std::map<int, model_info_t>::const_iterator it = m_manifest->driver_models.find(model_number);
@@ -95,6 +133,9 @@ std::string Driver::model_name(uint8_t model_number)
 
 uint8_t Driver::model_number() const
 {
+	if (! m_driver->driver_get_model)
+		return (uint8_t)(-1);
+
 	uint8_t retval;
 	int ret = m_driver->driver_get_model(m_device, & retval);
 
@@ -129,8 +170,27 @@ void Driver::parse(std::vector<uint8_t> data, header_callback_fn_t hcb, waypoint
 		throw std::runtime_error("Failed to parse dive profile: " + errmsg());
 }
 
+boost::any Driver::read_setting(const std::string & name) const
+{
+	if (! m_driver->settings_get)
+		throw UnsupportedOperation("settings_get is not supported by this backend");
+
+	throw UnsupportedOperation("settings_get is not supported by this backend");
+}
+
+std::list<boost::any> Driver::read_tuple(const std::string & name) const
+{
+	if (! m_driver->settings_get)
+		throw UnsupportedOperation("settings_get is not supported by this backend");
+
+	throw UnsupportedOperation("settings_get is not supported by this backend");
+}
+
 uint32_t Driver::serial_number() const
 {
+	if (! m_driver->driver_get_serial)
+		return (uint8_t)(-1);
+
 	uint32_t retval;
 	int ret = m_driver->driver_get_serial(m_device, & retval);
 
@@ -138,6 +198,16 @@ uint32_t Driver::serial_number() const
 		return (uint32_t)(-1);
 
 	return retval;
+}
+
+void Driver::set_time_of_day(time_t time) const
+{
+	if (! m_driver->settings_set_tod)
+		return;
+
+	int ret = m_driver->settings_set_tod(m_device, time);
+	if ((ret != DRIVER_ERR_SUCCESS) && (ret != DRIVER_ERR_UNSUPPORTED))
+		throw std::runtime_error("Failed to set dive computer time of day: " + std::string(m_driver->driver_errmsg(m_device)));
 }
 
 void _benthos_dc_extract_dives_cb(void * userdata, void * data, uint32_t length, const char * token)
@@ -169,4 +239,20 @@ std::list<dive_entry_t> Driver::transfer(device_callback_fn_t dcb, transfer_call
 
 	free(data);
 	return result;
+}
+
+void Driver::write_setting(const std::string & name, const boost::any & value) const
+{
+	if (! m_driver->settings_set)
+		throw UnsupportedOperation("settings_set is not supported by this backend");
+
+	throw UnsupportedOperation("settings_set is not supported by this backend");
+}
+
+void Driver::write_tuple(const std::string & name, const std::list<boost::any> & value) const
+{
+	if (! m_driver->settings_set)
+		throw UnsupportedOperation("settings_set is not supported by this backend");
+
+	throw UnsupportedOperation("settings_set is not supported by this backend");
 }

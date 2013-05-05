@@ -104,6 +104,60 @@ int smart_read_ulong(smart_device_t dev, const char * cmd, uint32_t * ans);
  */
 int smart_read_slong(smart_device_t dev, const char * cmd, int32_t * ans);
 
+/**
+ * @brief Write an Unsigned Character to the Smart Device
+ * @param[in] Device Handle
+ * @param[in] Command Data
+ * @param[in] Command Argument
+ * @return Error value or 0 on success
+ */
+int smart_write_uchar(smart_device_t dev, const char * cmd, uint8_t arg);
+
+/**
+ * @brief Write a Signed Character to the Smart Device
+ * @param[in] Device Handle
+ * @param[in] Command Data
+ * @param[in] Command Argument
+ * @return Error value or 0 on success
+ */
+int smart_write_schar(smart_device_t dev, const char * cmd, int8_t arg);
+
+/**
+ * @brief Write an Unsigned Integer to the Smart Device
+ * @param[in] Device Handle
+ * @param[in] Command Data
+ * @param[in] Command Argument
+ * @return Error value or 0 on success
+ */
+int smart_write_ushort(smart_device_t dev, const char * cmd, uint16_t arg);
+
+/**
+ * @brief Write a Signed Integer to the Smart Device
+ * @param[in] Device Handle
+ * @param[in] Command Data
+ * @param[in] Command Argument
+ * @return Error value or 0 on success
+ */
+int smart_write_sshort(smart_device_t dev, const char * cmd, int16_t arg);
+
+/**
+ * @brief Write an Unsigned Long Integer to the Smart Device
+ * @param[in] Device Handle
+ * @param[in] Command Data
+ * @param[in] Command Argument
+ * @return Error value or 0 on success
+ */
+int smart_write_ulong(smart_device_t dev, const char * cmd, uint32_t arg);
+
+/**
+ * @brief Write a Signed Long Integer to the Smart Device
+ * @param[in] Device Handle
+ * @param[in] Command Data
+ * @param[in] Command Argument
+ * @return Error value or 0 on success
+ */
+int smart_write_slong(smart_device_t dev, const char * cmd, int32_t arg);
+
 #ifdef __cplusplus
 }
 #endif

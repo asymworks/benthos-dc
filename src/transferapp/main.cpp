@@ -675,6 +675,7 @@ int main(int argc, char ** argv)
 		("token,t", po::value<std::string>(), "Transfer token")
 		("token-path", po::value<std::string>(), "Transfer token storage path")
 		("no-store-token,U", "Don't update the stored Transfer Token")
+		("update-time,T", "Update the Dive Computer Date/Time after transfer")
 	;
 
 	po::options_description desc;
@@ -719,6 +720,7 @@ int main(int argc, char ** argv)
 		return 1;
 	}
 
+	bool updatets = (vm.count("update-time") > 0);
 	bool honly = (vm.count("header-only") > 0);
 	bool quiet = (vm.count("quiet") > 0);
 	std::string driver_name(vm["driver"].as<std::string>());
@@ -776,6 +778,27 @@ int main(int argc, char ** argv)
 	{
 		std::cerr << e.what() << std::endl;
 		return 1;
+	}
+
+	// Connect and read Time of Day
+	if (! quiet)
+	{
+		std::cout << "Connected to " << dclass->name() << " device on " << (device_path.empty() ? "<auto>" : device_path) << std::endl;
+
+		try
+		{
+			char buf[100];
+
+			time_t gmtod = dev->get_time_of_day();
+			struct tm * tm;
+			tm = gmtime(& gmtod);
+			strftime(buf, 100, "%c", tm);
+
+			std::cout << "Dive computer date/time: " << buf << " UTC" << std::endl;
+		}
+		catch (UnsupportedOperation & e)
+		{
+		}
 	}
 
 	// Setup the Device Callback Data
@@ -850,6 +873,10 @@ int main(int argc, char ** argv)
 			std::cerr << e.what() << std::endl;
 		}
 	}
+
+	// Update Time Stamp
+	if (updatets)
+		dev->set_time_of_day(time(NULL));
 
 	// Success!
 	return 0;

@@ -2,7 +2,7 @@
 <!-- This file is generated automatically by src/plugins/libdc/_genfiles.py -->
 <plugin name="benthosdc-libdc" library="libdc" version="1.0">
     <driver name="libdc">
-        <description>Generic Driver (libdivecomputer)</description>
+        <description>libdivecomputer Driver</description>
         <interface>serial</interface>
         <parameters>
             <parameter name="model" type="model">Dive Computer Model</parameter>

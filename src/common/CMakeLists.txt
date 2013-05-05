@@ -39,5 +39,6 @@ add_library(common_module OBJECT
 	arglist.c
 	base64.c
 	irda.c
+	setting_value.c
 	unpack.c
 )
