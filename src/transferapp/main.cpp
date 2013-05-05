@@ -262,12 +262,6 @@ typedef struct
 	int								rgid;			///< Repetition Group Id
 	int								did;			///< Dive Id
 
-	time_t							cur_ts;			///< Current Timestamp
-	std::string						cur_tok;		///< Current Token
-
-	time_t							last_ts;		///< Most Recent Timestamp
-	std::string						last_tok;		///< Most Recent Token
-
 } parser_data;
 
 void parse_header(void * userdata, uint8_t token, int32_t value, uint8_t index, const char * name)
@@ -297,7 +291,6 @@ void parse_header(void * userdata, uint8_t token, int32_t value, uint8_t index, 
 	case DIVE_HEADER_START_TIME:
 	{
 		st = (time_t)value;
-		_data->cur_ts = st;
 		struct tm * tmp;
 		tmp = gmtime(& st);
 		strftime(buf, 255, "%Y-%m-%dT%H:%M:%S", tmp);
@@ -566,18 +559,12 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 	_data.rgid = 0;
 	_data.did = 0;
 
-	_data.last_ts = 0;
-	_data.last_tok = "";
-
 	// Parse the Dives
 	dive_data_t::const_iterator it;
 	for (it = dives.begin(); it != dives.end(); it++)
 	{
 		_data.cur_profile = 0;
 		_data.cur_waypoint = 0;
-
-		_data.cur_ts = 0;
-		_data.cur_tok = it->second;
 
 		_data.mixes.clear();
 		_data.tanks.clear();
@@ -625,12 +612,6 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 				}
 			}
 		}
-
-		if (_data.cur_ts > _data.last_ts)
-		{
-			_data.last_ts = _data.cur_ts;
-			_data.last_tok = _data.cur_tok;
-		}
 	}
 
 	// Save the Gas Definitions
@@ -662,7 +643,7 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 	xmlCleanupParser();
 
 	// Return Token
-	token = _data.last_tok;
+	token = dives.back().second;
 }
 
 int main(int argc, char ** argv)
@@ -712,7 +693,7 @@ int main(int argc, char ** argv)
 	if (vm.count("version"))
 	{
 		std::cout << "Benthos Dive Computer Library version " << BENTHOS_DC_VERSION_STRING << std::endl;
-		std::cout << "Copyright (c) 2011-2012 Asymworks, LLC.  All Rights Reserved." << std::endl;
+		std::cout << "Copyright (c) 2011-2013 Asymworks, LLC.  All Rights Reserved." << std::endl;
 		return 0;
 	}
 

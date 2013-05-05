@@ -135,6 +135,22 @@ typedef const char * (* plugin_driver_name_fn_t)(dev_handle_t);
 typedef const char * (* plugin_driver_errmsg_fn_t)(dev_handle_t);
 
 /**
+ * @brief Get the Device Model Number
+ * @param[in] Device Handle
+ * @param[out] Model Number
+ * @return Error value or 0 for success
+ */
+typedef int (* plugin_driver_get_model_fn_t)(dev_handle_t, uint8_t *);
+
+/**
+ * @brief Get the Device Serial Number
+ * @param[in] Device Handle
+ * @param[out] Serial Number
+ * @return Error value or 0 for success
+ */
+typedef int (* plugin_driver_get_serial_fn_t)(dev_handle_t, uint32_t *);
+
+/**
  * @brief Transfer bytes from the Dive Computer
  * @param[in] Device Handle
  * @param[out] Data Buffer

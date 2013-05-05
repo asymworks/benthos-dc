@@ -357,6 +357,16 @@ const char * libdc_driver_errmsg(dev_handle_t abstract)
 	return dev->errmsg;
 }
 
+int libdc_driver_get_model(dev_handle_t dev, uint8_t * outval)
+{
+	return DRIVER_ERR_UNSUPPORTED;
+}
+
+int libdc_driver_get_serial(dev_handle_t dev, uint32_t * outval)
+{
+	return DRIVER_ERR_UNSUPPORTED;
+}
+
 int libdc_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size, device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata)
 {
 	libdc_device_t dev = (libdc_device_t)(abstract);

@@ -34,6 +34,8 @@ static const driver_interface_t libdc_driver_interface =
 	libdc_driver_shutdown,		// driver_shutdown
 	libdc_driver_name,			// driver_name
 	libdc_driver_errmsg,		// driver_errmsg
+	libdc_driver_get_model,		// driver_get_model
+	libdc_driver_get_serial,	// driver_get_serial
 	libdc_driver_transfer,		// driver_transfer
 	libdc_driver_extract,		// driver_extract
 	libdc_parser_create,		// parser_create

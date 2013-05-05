@@ -81,7 +81,9 @@ const char * smart_driver_name(dev_handle_t dev);
 
 const char * smart_driver_errmsg(dev_handle_t dev);
 
-int smart_driver_get_length(dev_handle_t dev, uint32_t * length);
+int smart_driver_get_model(dev_handle_t dev, uint8_t * outval);
+int smart_driver_get_serial(dev_handle_t dev, uint32_t * outval);
+
 int smart_driver_transfer(dev_handle_t dev, void ** buffer, uint32_t * size, device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata);
 int smart_driver_extract(dev_handle_t dev, void * buffer, uint32_t size, divedata_callback_fn_t cb, void * userdata);
 

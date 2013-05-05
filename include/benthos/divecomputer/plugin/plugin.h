@@ -75,6 +75,9 @@ typedef struct
 
 	plugin_driver_errmsg_fn_t			driver_errmsg;
 
+	plugin_driver_get_model_fn_t		driver_get_model;
+	plugin_driver_get_serial_fn_t		driver_get_serial;
+
 	plugin_driver_transfer_fn_t			driver_transfer;
 	plugin_driver_extract_fn_t			driver_extract;
 

@@ -93,6 +93,17 @@ std::string Driver::model_name(uint8_t model_number)
 	return std::string();
 }
 
+uint8_t Driver::model_number() const
+{
+	uint8_t retval;
+	int ret = m_driver->driver_get_model(m_device, & retval);
+
+	if (ret != DRIVER_ERR_SUCCESS)
+		return (uint8_t)(-1);
+
+	return retval;
+}
+
 const std::string & Driver::name() const
 {
 	return m_manifest->driver_name;
@@ -116,6 +127,17 @@ void Driver::parse(std::vector<uint8_t> data, header_callback_fn_t hcb, waypoint
 	rc = m_driver->parser_parse_profile(m_parser, data.data(), data.size(), pcb, userdata);
 	if (rc != 0)
 		throw std::runtime_error("Failed to parse dive profile: " + errmsg());
+}
+
+uint32_t Driver::serial_number() const
+{
+	uint32_t retval;
+	int ret = m_driver->driver_get_serial(m_device, & retval);
+
+	if (ret != DRIVER_ERR_SUCCESS)
+		return (uint32_t)(-1);
+
+	return retval;
 }
 
 void _benthos_dc_extract_dives_cb(void * userdata, void * data, uint32_t length, const char * token)

@@ -310,6 +310,26 @@ const char * smart_driver_errmsg(dev_handle_t abstract)
 	return dev->errmsg;
 }
 
+int smart_driver_get_model(dev_handle_t abstract, uint8_t * outval)
+{
+	smart_device_t dev = (smart_device_t)(abstract);
+	if (dev == NULL)
+		return DRIVER_ERR_INVALID;
+
+	* outval = dev->model;
+	return DRIVER_ERR_SUCCESS;
+}
+
+int smart_driver_get_serial(dev_handle_t abstract, uint32_t * outval)
+{
+	smart_device_t dev = (smart_device_t)(abstract);
+	if (dev == NULL)
+		return DRIVER_ERR_INVALID;
+
+	* outval = dev->serial;
+	return DRIVER_ERR_SUCCESS;
+}
+
 int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size, device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata)
 {
 	smart_device_t dev = (smart_device_t)(abstract);
@@ -320,7 +340,7 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 	}
 
 	// Send the Device Callback and retrieve the Token
-	const char * stoken = 0;
+	char * stoken = 0;
 	int free_token = 0;
 	uint32_t token = 0;
 	int rc;

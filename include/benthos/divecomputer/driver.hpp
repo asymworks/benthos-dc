@@ -94,6 +94,12 @@ public:
 	 */
 	std::string model_name(uint8_t model_number);
 
+	//! @return Model Number of Connected Device
+	uint8_t model_number() const;
+
+	//! @return Serial Number of Connected Device
+	uint32_t serial_number() const;
+
 	//! @return Driver Name
 	const std::string & name() const;
 
