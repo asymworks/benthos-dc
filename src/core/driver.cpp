@@ -34,6 +34,8 @@
 
 #include <benthos/divecomputer/driver.hpp>
 
+#include <common/setting_value.h>
+
 using namespace benthos::dc;
 
 UnsupportedOperation::UnsupportedOperation(const char * what)
@@ -175,7 +177,7 @@ boost::any Driver::read_setting(const std::string & name) const
 	if (! m_driver->settings_get)
 		throw UnsupportedOperation("settings_get is not supported by this backend");
 
-	throw UnsupportedOperation("settings_get is not supported by this backend");
+	throw UnsupportedOperation("settings_set is not supported by this backend");
 }
 
 std::list<boost::any> Driver::read_tuple(const std::string & name) const

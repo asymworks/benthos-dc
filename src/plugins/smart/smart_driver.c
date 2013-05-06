@@ -29,6 +29,7 @@
 
 #include "smart_driver.h"
 #include "smart_io.h"
+#include "smart_settings.h"
 
 void smart_driver_discover_cb(unsigned int address, const char * name, unsigned int charset, unsigned int hints, void * userdata)
 {
@@ -272,6 +273,9 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 	time_t hstime = time(NULL) * 2;
 	dev->epoch = smart_driver_epoch();
 	dev->tcorr = hstime - dev->ticks;
+
+	// Setup the Settings Table
+	dev->settings = smart_settings_table(dev->model);
 
 	// Device Opened Successfully
 	return 0;

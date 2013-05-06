@@ -654,6 +654,86 @@ void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfi
 	token = dives.back().second;
 }
 
+void run_transfer(const po::variables_map & vm, DriverClass::Ptr dclass, Driver::Ptr dev, std::string device_path, bool quiet, bool honly, bool updatets)
+{
+	// Setup the Device Callback Data
+	app_data appdata;
+	appdata.dev = dev;
+	appdata.quiet = quiet;
+	appdata.device_path = device_path;
+	appdata.token_file = "";
+
+	if (vm.count("token-path"))
+		appdata.token_path = vm["token-path"].as<std::string>();
+
+	if (vm.count("token"))
+		appdata.token = vm["token"].as<std::string>();
+
+	// Allocate storage for transferred data
+	dive_data_t dive_data;
+
+	// Run the Transfer
+	transfer_callback_fn_t cb = NULL;
+	if (! quiet)
+		cb = & progress_bar;
+
+	dive_data = dev->transfer(& device_info, cb, & appdata);
+	if (dive_data.size() > 0)
+	{
+		if (! quiet)
+			std::cout << "Transferred " << dive_data.size() << " new dives" << std::endl;
+	}
+	else
+		std::cout << "No new data to transfer" << std::endl;
+
+	std::string token;
+
+	// Parse Dives
+	if (dive_data.size() > 0)
+	{
+		std::string outfile;
+		if (vm.count("output-file"))
+			outfile = vm["output-file"].as<std::string>();
+
+		parseDives(dev, dive_data, outfile, token, honly);
+		if (! quiet && ! outfile.empty())
+			std::cout << "Wrote UDDF dive data to " << outfile << std::endl;
+	}
+
+	// Store the new Transfer Token
+	fs::path tokenpath(appdata.token_file);
+	fs::path tokendir(tokenpath.parent_path());
+
+	if (! vm.count("no-store-token"))
+	{
+		try
+		{
+			if (! fs::exists(tokendir))
+				fs::create_directories(tokendir);
+
+
+			if (dive_data.size() > 0)
+			{
+				std::ofstream f(tokenpath.native());
+				f << token << std::endl;
+				f.close();
+
+				if (! quiet)
+					std::cout << "Stored token " << token << " to " << appdata.token_file << std::endl;
+			}
+		}
+		catch (std::exception & e)
+		{
+			std::cerr << "Failed to save transfer token to " << tokenpath.native() << std::cerr;
+			std::cerr << e.what() << std::endl;
+		}
+	}
+
+	// Update Time Stamp
+	if (updatets)
+		dev->set_time_of_day(time(NULL));
+}
+
 int main(int argc, char ** argv)
 {
 	// Setup Program Options
@@ -676,6 +756,8 @@ int main(int argc, char ** argv)
 		("token-path", po::value<std::string>(), "Transfer token storage path")
 		("no-store-token,U", "Don't update the stored Transfer Token")
 		("update-time,T", "Update the Dive Computer Date/Time after transfer")
+		("read-setting,r", po::value<std::string>(), "Read a setting from the Dive Computer")
+		("write-setting,w", po::value<std::string>(), "Write a setting to the Dive Computer")
 	;
 
 	po::options_description desc;
@@ -801,82 +883,31 @@ int main(int argc, char ** argv)
 		}
 	}
 
-	// Setup the Device Callback Data
-	app_data appdata;
-	appdata.dev = dev;
-	appdata.quiet = quiet;
-	appdata.device_path = device_path;
-	appdata.token_file = "";
-
-	if (vm.count("token-path"))
-		appdata.token_path = vm["token-path"].as<std::string>();
-
-	if (vm.count("token"))
-		appdata.token = vm["token"].as<std::string>();
-
-	// Allocate storage for transferred data
-	dive_data_t dive_data;
-
-	// Run the Transfer
-	transfer_callback_fn_t cb = NULL;
-	if (! quiet)
-		cb = & progress_bar;
-
-	dive_data = dev->transfer(& device_info, cb, & appdata);
-	if (dive_data.size() > 0)
+	// Check for Read Parameter operation
+	if (vm.count("read-setting"))
 	{
+		std::string sname = vm["read-setting"].as<std::string>();
+		if (! dev->has_setting(sname))
+		{
+			std::cerr << "Unknown setting name '" << sname << "'" << std::endl;
+			return 1;
+		}
+
+		boost::any val(dev->read_setting(sname));
+
 		if (! quiet)
-			std::cout << "Transferred " << dive_data.size() << " new dives" << std::endl;
+			std::cout << sname << ": " << boost::any_cast<int32_t>(val) << std::endl;
+		else
+			std::cout << boost::any_cast<int32_t>(val) << std::endl;
+	}
+	else if (vm.count("write-setting"))
+	{
+		dev->write_setting("utc_offset", boost::any(-480));
 	}
 	else
-		std::cout << "No new data to transfer" << std::endl;
-
-	std::string token;
-
-	// Parse Dives
-	if (dive_data.size() > 0)
 	{
-		std::string outfile;
-		if (vm.count("output-file"))
-			outfile = vm["output-file"].as<std::string>();
-
-		parseDives(dev, dive_data, outfile, token, honly);
-		if (! quiet && ! outfile.empty())
-			std::cout << "Wrote UDDF dive data to " << outfile << std::endl;
+		run_transfer(vm, dclass, dev, device_path, quiet, honly, updatets);
 	}
-
-	// Store the new Transfer Token
-	fs::path tokenpath(appdata.token_file);
-	fs::path tokendir(tokenpath.parent_path());
-
-	if (! vm.count("no-store-token"))
-	{
-		try
-		{
-			if (! fs::exists(tokendir))
-				fs::create_directories(tokendir);
-
-
-			if (dive_data.size() > 0)
-			{
-				std::ofstream f(tokenpath.native());
-				f << token << std::endl;
-				f.close();
-
-				if (! quiet)
-					std::cout << "Stored token " << token << " to " << appdata.token_file << std::endl;
-			}
-		}
-		catch (std::exception & e)
-		{
-			std::cerr << "Failed to save transfer token to " << tokenpath.native() << std::cerr;
-			std::cerr << e.what() << std::endl;
-		}
-	}
-
-	// Update Time Stamp
-	if (updatets)
-		dev->set_time_of_day(time(NULL));
 
 	// Success!
 	return 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Asymworks, LLC.  All Rights Reserved.
+ * Copyright (C) 2013 Asymworks, LLC.  All Rights Reserved.
  *
  * Developed by: Asymworks, LLC <info@asymworks.com>
  * 				 http://www.asymworks.com
@@ -28,46 +28,14 @@
  * WITH THE SOFTWARE.
  */
 
-#ifndef MANIFEST_PARSER_HPP_
-#define MANIFEST_PARSER_HPP_
+#ifndef BENTHOS_DC_SETTINGS_HPP_
+#define BENTHOS_DC_SETTINGS_HPP_
 
 /**
- * @file src/core/manifest_parser.hpp
- * @brief Plugin Manifest Parser
+ * @file include/benthos/divecomputer/settings.hpp
+ * @brief Dive Computer Settings Interface
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */
 
-#include <string>
-#include <benthos/divecomputer/registry.hpp>
 
-using namespace benthos::dc;
-
-/**
- * @brief Parse a Manifest File
- * @param[in] Manifest File Name
- * @return Manifest Information
- */
-plugin_manifest_t parseManifest(const std::string & manifest);
-
-/**
- * @brief Lookup a Named Type in the Manifest
- * @param[in] Manifest
- * @param[in] Type Name
- * @return Type Specification Pointer
- */
-setting_typespec_ptr manifest_lookup_type(const driver_manifest_t &, const std::string &);
-
-/**
- * @brief Lookup a Named Setting in the Manifest
- * @param[in] Manifest
- * @param[in] Setting Name
- * @param[in] Model Identifier
- * @return Setting Specification
- *
- * Looks up a named setting in the manifest.  If a model-specific setting has
- * the same name as a global setting, the model-specific setting will override
- * the global one.
- */
-setting_info_ptr manifest_lookup_setting(const driver_manifest_t &, const std::string &, int);
-
-#endif /* MANIFEST_PARSER_HPP_ */
+#endif /* BENTHOS_DC_SETTINGS_HPP_ */

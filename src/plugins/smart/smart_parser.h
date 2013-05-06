@@ -33,6 +33,12 @@
 #ifndef SMART_PARSER_H_
 #define SMART_PARSER_H_
 
+/**
+ * @file src/plugins/smart/smart_parser.h
+ * @brief Uwatec Smart Device Parser Functions
+ * @author Jonathan Krauss <jkrauss@asymworks.com>
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif

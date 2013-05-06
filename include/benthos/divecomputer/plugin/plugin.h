@@ -59,6 +59,8 @@ extern "C" {
 #define DRIVER_ERR_UNSUPPORTED	-7		///< Unsupported Device or Operation
 #define DRIVER_ERR_CANCELLED	-8		///< Operation Cancelled
 #define DRIVER_ERR_PARSER		-9		///< Parser Error
+#define DRIVER_ERR_READONLY		-10		///< Setting is Read-Only
+#define DRIVER_ERR_WRITEONLY	-11		///< Setting is Write-Only
 /*@}*/
 
 /**

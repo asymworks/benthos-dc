@@ -48,9 +48,9 @@ static const driver_interface_t smart_driver_interface =
 	smart_parser_parse_profile,	// parser_parse_profile
 	smart_settings_get_tod,		// settings_get_tod
 	smart_settings_set_tod,		// settings_set_tod
-	0,							// settings_has
-	0,							// settings_get
-	0,							// settings_set
+	smart_settings_has,			// settings_has
+	smart_settings_get,			// settings_get
+	smart_settings_set,			// settings_set
 };
 
 int plugin_load()

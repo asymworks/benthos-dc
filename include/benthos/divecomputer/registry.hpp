@@ -79,6 +79,86 @@ typedef struct
 } param_info_t;
 
 /**
+ * @brief Setting Primitive Type Enumeration
+ */
+typedef enum
+{
+	stInt,			///< Integer Setting
+	stUInt,			///< Unsigned Integer Setting
+	stBool,			///< Boolean Setting
+	stDateTime,		///< Date/Time Setting
+	stString,		///< Character String Setting
+
+} setting_basetype_t;
+
+/**
+ * @brief Setting Extended Type Enumeration
+ */
+typedef enum
+{
+	etNone,			///< No Extended Type
+	etStruct,		///< Structured Type
+	etRange,		///< Range Type
+	etEnum,			///< Enumerated Type
+	etBitField,		///< Bit Field Type
+	etFixedPoint,	///< Fixed Point Type
+
+} setting_exttype_t;
+
+struct setting_typespec_t_;
+typedef boost::shared_ptr<const struct setting_typespec_t_> setting_typespec_ptr;
+typedef boost::shared_ptr<struct setting_typespec_t_> setting_typespec_mptr;
+
+struct setting_info_t_;
+typedef boost::shared_ptr<const struct setting_info_t_> setting_info_ptr;
+typedef boost::shared_ptr<struct setting_info_t_> setting_info_mptr;
+
+/**
+ * @brief Setting Type Specification Entry
+ *
+ * Holds parsed information about a custom setting type including name, base
+ * type, and type constraints.
+ */
+typedef struct setting_typespec_t_
+{
+	struct setting_typespec_t_ *				base;		///< Base Type Pointer
+	std::string									name;		///< Derived Type Name
+	setting_basetype_t							base_type;	///< Base Type Name
+	setting_exttype_t 							ext_type;	///< Extended Type Type
+
+	int64_t										min;		///< Minimum Value (Range)
+	int64_t										max;		///< Maximum Value (Range)
+	int64_t										step;		///< Step Value (Range)
+
+	std::list<std::pair<int64_t, std::string> >	names;		///< List of Names (Enum or Bitfield)
+	std::map<std::string, setting_typespec_ptr>	members;	///< List of Members (Struct)
+
+	uint8_t										radix;		///< Fixed-Point Radix
+	uint8_t										scale;		///< Fixed-Point Scale
+
+} setting_typespec_t;
+
+/**
+ * @brief Setting Specification Entry
+ *
+ * Holds parsed information about a dive computer setting including name,
+ * type, display name, description, and flags.
+ */
+typedef struct setting_info_t_
+{
+	std::string				group_name;
+	std::string				setting_name;
+	std::string				setting_desc;
+	std::string				setting_dispname;
+
+	setting_typespec_ptr	setting_type;
+
+	bool					setting_readonly;
+	bool					setting_writeonly;
+
+} setting_info_t;
+
+/**
  * @brief Device Model Information
  *
  * Holds hints for the GUI about a model number's actual model and manufacturer
@@ -87,8 +167,9 @@ typedef struct
  */
 typedef struct
 {
-	std::string			model_name;
-	std::string			manuf_name;
+	std::string					model_name;
+	std::string					manuf_name;
+	std::list<setting_info_ptr>	settings;
 
 } model_info_t;
 
@@ -101,16 +182,19 @@ typedef struct
  */
 typedef struct
 {
-	std::string					plugin_name;
+	std::string						plugin_name;
 
-	std::string					driver_name;
-	std::string					driver_desc;
-	std::string					driver_intf;
+	std::string						driver_name;
+	std::string						driver_desc;
+	std::string						driver_intf;
 
-	std::list<param_info_t>		driver_params;
-	std::map<int, model_info_t>	driver_models;
+	std::list<setting_info_ptr>		global_settings;
+	std::list<setting_typespec_ptr>	global_types;
 
-	std::string					model_param;
+	std::list<param_info_t>			driver_params;
+	std::map<int, model_info_t>		driver_models;
+
+	std::string						model_param;
 
 } driver_manifest_t;
 

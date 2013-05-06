@@ -37,6 +37,7 @@ add_library(smart SHARED
 	smart_driver.c
 	smart_io.c
 	smart_parser.c
+	smart_settings_tec2g.c
 	smart_settings.c
 	$<TARGET_OBJECTS:common_module>
 )

@@ -54,23 +54,26 @@ extern "C" {
 //! Uwatec Smart Device Structure
 struct smart_device_
 {
-	irda_t			s;			///< IrDA Socket
-	int				errcode;	///< Last Error Code
-	const char *	errmsg;		///< Last Error Message
+	irda_t						s;			///< IrDA Socket
+	int							errcode;	///< Last Error Code
+	const char *				errmsg;		///< Last Error Message
 
-	unsigned int	epaddr;		///< IrDA Endpoint Address
-	const char *	epname;		///< IrDA Endpoint Name
-	const char *	devname;	///< Device Name
+	unsigned int				epaddr;		///< IrDA Endpoint Address
+	const char *				epname;		///< IrDA Endpoint Name
+	const char *				devname;	///< Device Name
 
-	int				lsap;		///< IrDA LSAP Identifier
-	unsigned int	csize;		///< IrDA ChunK Size
+	int							lsap;		///< IrDA LSAP Identifier
+	unsigned int				csize;		///< IrDA ChunK Size
 
-	time_t			epoch;		///< Epoch in Half-Seconds
-	int32_t			tcorr;		///< Time Correction Value
+	time_t						epoch;		///< Epoch in Half-Seconds
+	int32_t						tcorr;		///< Time Correction Value
 
-	uint8_t			model;		///< Model Number
-	uint32_t		serial;		///< Serial Number
-	uint32_t		ticks;		///< Tick Count
+	uint8_t						model;		///< Model Number
+	uint32_t					serial;		///< Serial Number
+	uint32_t					ticks;		///< Tick Count
+
+	struct setting_entry_t *	settings;	///< Settings Table
+
 };
 
 int smart_driver_create(dev_handle_t * dev);

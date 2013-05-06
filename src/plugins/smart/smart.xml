@@ -17,5 +17,12 @@
 			<model id="24">Smart Tec</model>
 			<model id="28">Smart Z</model>
 		</models>
+		<settings>
+			<table model="19">
+				<setting group="device" name="hw_version" display="HW Version" type="uint" flags="readonly">Hardware Version</setting>
+				<setting group="device" name="sw_version" display="SW Version" type="uint" flags="readonly">Software Version</setting>
+				<setting group="device" name="battery_level" type="uint" flags="readonly">Battery Level (1-6)</setting>
+			</table>
+		</settings>
 	</driver>
 </plugin>

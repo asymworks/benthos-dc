@@ -32,12 +32,109 @@
 #include <stdexcept>
 #include <string>
 
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
 #include "manifest_parser.hpp"
 
 using namespace benthos::dc;
+
+static const setting_typespec_t _bdc_bi_typespec_int =
+{
+	NULL,
+	"int",
+	stInt,
+	etRange,
+	INT32_MIN, INT32_MAX, 1,
+	std::list<std::pair<int64_t, std::string> >(),
+	std::map<std::string, setting_typespec_ptr>(),
+	10, 0
+};
+
+static const setting_typespec_t _bdc_bi_typespec_uint =
+{
+	NULL,
+	"uint",
+	stInt,
+	etRange,
+	0, UINT32_MAX, 1,
+	std::list<std::pair<int64_t, std::string> >(),
+	std::map<std::string, setting_typespec_ptr>(),
+	10, 0
+};
+
+static const setting_typespec_t _bdc_bi_typespec_bool =
+{
+	NULL,
+	"bool",
+	stBool,
+	etNone,
+	0, 0, 0,
+	std::list<std::pair<int64_t, std::string> >(),
+	std::map<std::string, setting_typespec_ptr>(),
+	10, 0
+};
+
+static const setting_typespec_t _bdc_bi_typespec_datetime =
+{
+	NULL,
+	"datetime",
+	stDateTime,
+	etNone,
+	0, 0, 0,
+	std::list<std::pair<int64_t, std::string> >(),
+	std::map<std::string, setting_typespec_ptr>(),
+	10, 0
+};
+
+static const setting_typespec_t _bdc_bi_typespec_string =
+{
+	NULL,
+	"string",
+	stBool,
+	etNone,
+	0, 0, 0,
+	std::list<std::pair<int64_t, std::string> >(),
+	std::map<std::string, setting_typespec_ptr>(),
+	10, 0
+};
+
+void _bdc_static_deleter(const struct setting_typespec_t_ *)
+{
+}
+
+setting_typespec_ptr manifest_lookup_type(const driver_manifest_t & dm, const std::string & name)
+{
+	std::list<setting_typespec_ptr>::const_iterator it;
+	for (it = dm.global_types.begin(); it != dm.global_types.end(); it++)
+		if ((* it)->name == name)
+			return (* it);
+
+	return setting_typespec_ptr();
+}
+
+setting_info_ptr manifest_lookup_setting(const driver_manifest_t & dm, const std::string & name, int model)
+{
+	setting_info_ptr ret;
+	std::list<setting_info_ptr>::const_iterator it;
+	for (it = dm.global_settings.begin(); it != dm.global_settings.end(); it++)
+		if ((* it)->setting_name == name)
+			ret = * it;
+
+	std::map<int, model_info_t>::const_iterator mit = dm.driver_models.find(model);
+	if (mit != dm.driver_models.end())
+	{
+		const model_info_t & mdl = mit->second;
+		for (it = mdl.settings.begin(); it != mdl.settings.end(); it++)
+			if ((* it)->setting_name == name)
+				ret = * it;
+	}
+
+	return ret;
+}
 
 void parseDriverName(xmlAttr * attr, driver_manifest_t & m)
 {
@@ -216,6 +313,138 @@ void parseDriverModels(xmlNode * node, driver_manifest_t & m)
 	}
 }
 
+void parseDriverTypes(xmlNode * node, driver_manifest_t & m)
+{
+	xmlNode * cur = node->children;
+	for ( ; cur ; cur = cur->next)
+	{
+		if (cur->type != XML_ELEMENT_NODE)
+			continue;
+
+		if (strcmp((char *)cur->name, "typedef") != 0)
+			throw std::runtime_error("Unsupported node <" + std::string((char *)cur->name) + "> within <types>");
+	}
+}
+
+void parseDriverSettings(xmlNode * node, driver_manifest_t & m)
+{
+	xmlNode * cur = node->children;
+	for ( ; cur ; cur = cur->next)
+	{
+		if (cur->type != XML_ELEMENT_NODE)
+			continue;
+
+		if (strcmp((char *)cur->name, "types") == 0)
+			parseDriverTypes(cur, m);
+		else if (strcmp((char *)cur->name, "table") != 0)
+			throw std::runtime_error("Unsupported node <" + std::string((char *)cur->name) + "> within <settings>");
+
+		int rc;
+		int model_id = -1;
+		xmlAttr * attr = cur->properties;
+		for ( ; attr ; attr = attr->next)
+		{
+			if (strcmp((char *)attr->name, "model") == 0)
+			{
+				if (model_id != -1)
+					throw std::runtime_error("Duplicate 'model' attribute in <table>");
+				rc = sscanf((char *)attr->children->content, "%u", & model_id);
+				if ((rc != 1) || (m.driver_models.find(model_id) == m.driver_models.end()))
+					throw std::runtime_error("Invalid model number '" + std::string((char *)attr->children->content) + "' within <table>");
+			}
+			else
+				throw std::runtime_error("Unsupported Attribute '" + std::string((char *)attr->name) + "' within <table>");
+		}
+
+		xmlNode * child = cur->children;
+		for ( ; child ; child = child->next )
+		{
+			if (child->type != XML_ELEMENT_NODE)
+				continue;
+
+			if (strcmp((char *)child->name, "setting") != 0)
+				throw std::runtime_error("Unsupported node <" + std::string((char *)child->name) + "> within <table>");
+
+			std::string g_name;
+			std::string s_name;
+			std::string s_desc;
+			std::string s_type;
+			std::string s_flags;
+			std::string d_name;
+
+			for (attr = child->properties ; attr ; attr = attr->next)
+			{
+				if (strcmp((char *)attr->name, "group") == 0)
+					g_name = (char *)attr->children->content;
+				else if (strcmp((char *)attr->name, "name") == 0)
+					s_name = (char *)attr->children->content;
+				else if (strcmp((char *)attr->name, "type") == 0)
+					s_type = (char *)attr->children->content;
+				else if (strcmp((char *)attr->name, "display") == 0)
+					d_name = (char *)attr->children->content;
+				else if (strcmp((char *)attr->name, "flags") == 0)
+					s_flags = (char *)attr->children->content;
+				else
+					throw std::runtime_error("Unsupported Attribute '" + std::string((char *)attr->name) + "' within <setting>");
+			}
+
+			xmlNode * schild = child->children;
+			for ( ; schild ; schild = schild->next)
+				if (schild->type == XML_TEXT_NODE)
+					s_desc = (char *)schild->content;
+				else
+					throw std::runtime_error("Nodes are not allowed within <setting>");
+
+			if (s_name.empty())
+				throw std::runtime_error("Missing 'name' attribute in <setting>");
+
+			setting_info_ptr p1 = manifest_lookup_setting(m, s_name, -1);
+			setting_info_ptr p2 = manifest_lookup_setting(m, s_name, model_id);
+			if (p1 && p2 && (p1 != p2))
+				throw std::runtime_error("Duplicate setting '" + s_name + "' within <table>");
+
+			if (s_type.empty())
+				throw std::runtime_error("Missing 'type' attribute for setting '" + s_name + "'");
+
+			setting_typespec_ptr type_ = manifest_lookup_type(m, s_type);
+			if (! type_)
+				throw std::runtime_error("Undefined type '" + s_type + "' for setting '" + s_name + "'");
+
+			setting_info_mptr si(new setting_info_t);
+			si->group_name = g_name;
+			si->setting_name = s_name;
+			si->setting_desc = s_desc;
+			si->setting_dispname = d_name;
+			si->setting_type = type_;
+			si->setting_readonly = false;
+			si->setting_writeonly = false;
+
+			if (! s_flags.empty())
+			{
+				boost::char_separator<char> sep(", ");
+				boost::tokenizer<boost::char_separator<char> > tokens(s_flags, sep);
+				BOOST_FOREACH (const std::string & t, tokens)
+				{
+					if (t == "readonly")
+						si->setting_readonly = true;
+					else if (t == "writeonly")
+						si->setting_writeonly = true;
+					else
+						throw std::runtime_error("Unsupported flag '" + t + "' within setting '" + s_name + "'");
+				}
+
+				if (si->setting_readonly && si->setting_writeonly)
+					throw std::runtime_error("Setting '" + s_name + "' may not specify both read only and write only");
+			}
+
+			if (model_id == -1)
+				m.global_settings.push_back(si);
+			else
+				m.driver_models[model_id].settings.push_back(si);
+		}
+	}
+}
+
 void parseDriver(xmlNode * driver, plugin_manifest_t & m)
 {
 	if (driver->type != XML_ELEMENT_NODE)
@@ -225,6 +454,12 @@ void parseDriver(xmlNode * driver, plugin_manifest_t & m)
 		throw std::runtime_error("Driver node must be <driver>");
 
 	driver_manifest_t dm;
+
+	dm.global_types.push_back(setting_typespec_ptr(& _bdc_bi_typespec_int,		_bdc_static_deleter));
+	dm.global_types.push_back(setting_typespec_ptr(& _bdc_bi_typespec_uint,		_bdc_static_deleter));
+	dm.global_types.push_back(setting_typespec_ptr(& _bdc_bi_typespec_bool,		_bdc_static_deleter));
+	dm.global_types.push_back(setting_typespec_ptr(& _bdc_bi_typespec_datetime,	_bdc_static_deleter));
+	dm.global_types.push_back(setting_typespec_ptr(& _bdc_bi_typespec_string,	_bdc_static_deleter));
 
 	xmlAttr * attr = driver->properties;
 	for ( ; attr ; attr = attr->next)
@@ -249,6 +484,8 @@ void parseDriver(xmlNode * driver, plugin_manifest_t & m)
 			parseDriverParams(cur, dm);
 		else if (strcmp((char *)cur->name, "models") == 0)
 			parseDriverModels(cur, dm);
+		else if (strcmp((char *)cur->name, "settings") == 0)
+			parseDriverSettings(cur, dm);
 		else
 			throw std::runtime_error("Unsupported node <" + std::string((char *)cur->name) + "> within <driver>");
 	}

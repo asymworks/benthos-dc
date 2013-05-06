@@ -105,7 +105,7 @@ typedef int (* plugin_setting_has_fn_t)(dev_handle_t, const char *);
  * Reads a setting from the Dive Computer and stores it in the given value
  * object pointer.
  */
-typedef int (* plugin_setting_get_fn_t)(dev_handle_t, const char *, value_handle_t);
+typedef int (* plugin_setting_get_fn_t)(dev_handle_t, const char *, value_handle_t *);
 
 /**
  * @brief Write a Dive Computer Setting

@@ -33,6 +33,12 @@
 #ifndef SMART_SETTINGS_H_
 #define SMART_SETTINGS_H_
 
+/**
+ * @file src/plugins/smart/smart_io.h
+ * @brief Uwatec Smart Device Settings Functions
+ * @author Jonathan Krauss <jkrauss@asymworks.com>
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,6 +50,22 @@ extern "C" {
 
 int smart_settings_get_tod(dev_handle_t, time_t *);
 int smart_settings_set_tod(dev_handle_t, time_t);
+
+int smart_settings_has(dev_handle_t, const char *);
+int smart_settings_get(dev_handle_t, const char *, value_handle_t *);
+int smart_settings_set(dev_handle_t, const char *, const value_handle_t);
+
+struct setting_entry_t * smart_settings_table(uint8_t);
+
+typedef int (* smart_settings_getter_fn_t)(dev_handle_t, value_handle_t *);
+typedef int (* smart_settings_setter_fn_t)(dev_handle_t, const value_handle_t);
+
+struct setting_entry_t {
+	const char *				name;
+	smart_settings_getter_fn_t	getter;
+	smart_settings_setter_fn_t	setter;
+
+};
 
 #ifdef __cplusplus
 }
