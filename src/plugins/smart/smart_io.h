@@ -48,7 +48,7 @@ typedef struct smart_device_ *	smart_device_t;
  * @param[in] Answer Size
  * @return Error value or 0 on success
  */
-int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, ssize_t cmdlen, unsigned char * ans, ssize_t anslen);
+int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, size_t cmdlen, unsigned char * ans, size_t anslen);
 
 /**
  * @brief Read an Unsigned Character from the Smart Device

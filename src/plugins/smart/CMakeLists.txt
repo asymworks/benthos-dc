@@ -31,6 +31,12 @@
 # WITH THE SOFTWARE.
 #
 
+# Link with Winsock on Windows for IrDA
+set(WINSOCK_LIBRARY)
+if (WIN32)
+	set(WINSOCK_LIBRARY "ws2_32.lib")
+endif (WIN32)
+
 # Build the Uwatec Smart Plugin
 add_library(smart SHARED
 	benthosdc_smart.c
@@ -42,6 +48,7 @@ add_library(smart SHARED
 
 # Link the Uwatec Smart Plugin
 target_link_libraries(smart
+	${WINSOCK_LIBRARY}
 )
 
 # Package the Uwatec Smart Plugin

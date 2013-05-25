@@ -441,7 +441,7 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 	pos = 0;
 	while (len > 0)
 	{
-		ssize_t nt;
+		size_t nt;
 
 		if (len > dev->csize)
 			nt = dev->csize;

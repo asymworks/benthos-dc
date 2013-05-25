@@ -30,12 +30,12 @@
 #include "smart_driver.h"
 #include "smart_io.h"
 
-int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, ssize_t cmdlen, unsigned char * ans, ssize_t anslen)
+int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, size_t cmdlen, unsigned char * ans, size_t anslen)
 {
 	int rc;
 	int timeout = 0;
-	ssize_t _cmdlen = cmdlen;
-	ssize_t _anslen = anslen;
+	size_t _cmdlen = cmdlen;
+	size_t _anslen = anslen;
 
 	if ((dev == NULL) || (dev->s == NULL))
 	{
