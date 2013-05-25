@@ -56,29 +56,46 @@ void smart_driver_discover_cb(unsigned int address, const char * name, unsigned 
 time_t smart_driver_epoch()
 {
 	struct tm t;
-	char * tz_orig;
+	char * tzorig;
 	time_t epoch;
 
 	memset(& t, 0, sizeof(t));
 	t.tm_year = 100;
 	t.tm_mday = 1;
 
-	tz_orig = getenv("TZ");
-	if (tz_orig)
-		tz_orig = strdup(tz_orig);
+	tzorig = getenv("TZ");
+	if (tzorig)
+		tzorig = strdup(tzorig);
 
+#if defined(_WIN32) || defined(WIN32)
+	_putenv("TZ=UTC");
+#else
 	setenv("TZ", "UTC", 1);
-	tzset();
+#endif
 
+	tzset();
 	epoch = mktime(& t) * 2;
 
-	if (tz_orig)
+
+#if defined(_WIN32) || defined(WIN32)
+	if (tzorig)
 	{
-		setenv("TZ", tz_orig, 1);
-		free(tz_orig);
+		char buf[256];
+		sprintf_s(buf, 256, "TZ=%s", tzorig);
+		_putenv(buf);
+		free(tzorig);
+	}
+	else
+		_putenv("TZ=");
+#else
+	if (tzorig)
+	{
+		setenv("TZ", tzorig, 1);
+		free(tzorig);
 	}
 	else
 		unsetenv("TZ");
+#endif
 
 	tzset();
 
@@ -399,6 +416,8 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 
 	if (* size == 0)
 		return 0;
+
+	len = * size;
 
 	// Allocate the Data Buffer
 	(* buffer) = malloc(* size);
