@@ -37,14 +37,25 @@ struct arglist_
 	struct arglist_	*	next;
 };
 
+#if defined(_WIN32) || defined(WIN32)
+#define CHECK_ARGLIST_HANDLE(s) \
+	if (s == NULL) \
+	{ \
+		SetLastError(ERROR_INVALID_HANDLE); \
+		return -1; \
+	}
+#else
+#define CHECK_ARGLIST_HANDLE(s) \
+	if (s == NULL) \
+	{ \
+		errno = EINVAL; \
+		return -1; \
+	}
+#endif
+
 int arglist_parse(arglist_t * arglist, const char * argstring)
 {
-	if (arglist == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
-
+	arglist_t entry;
 	arglist_t head = 0;
 	arglist_t cur = 0;
 	ssize_t p;
@@ -53,6 +64,8 @@ int arglist_parse(arglist_t * arglist, const char * argstring)
 	int in_name;
 	char name[258];		ssize_t nsize;
 	char value[258];	ssize_t vsize;
+
+	CHECK_ARGLIST_HANDLE(arglist)
 
 	memset(name, '\0', 258);
 	memset(value, '\0', 258);
@@ -111,6 +124,8 @@ int arglist_parse(arglist_t * arglist, const char * argstring)
 			}
 			else
 			{
+				arglist_t entry;
+
 				// End of Name/Value Token Pair
 				if (in_name)
 					name[nsize++] = '\0';
@@ -118,7 +133,7 @@ int arglist_parse(arglist_t * arglist, const char * argstring)
 					value[vsize++] = '\0';
 
 				// Create the Entry
-				arglist_t entry = (arglist_t)malloc(sizeof(struct arglist_));
+				entry = (arglist_t)malloc(sizeof(struct arglist_));
 				if (entry == NULL)
 					return -1;
 
@@ -153,7 +168,7 @@ int arglist_parse(arglist_t * arglist, const char * argstring)
 	}
 
 	// If the string did not end in a colon, add the last entry
-	arglist_t entry = (arglist_t)malloc(sizeof(struct arglist_));
+	entry = (arglist_t)malloc(sizeof(struct arglist_));
 	if (entry == NULL)
 		return -1;
 
