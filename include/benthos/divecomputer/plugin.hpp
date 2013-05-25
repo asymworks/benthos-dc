@@ -45,6 +45,9 @@
 namespace benthos { namespace dc
 {
 
+//! Opaque Library Handle Type
+typedef struct dll_handle_t_ *		dll_handle_t;
+
 /**
  * @brief Benthos Plugin Class
  *
@@ -105,7 +108,7 @@ public:
 private:
 	const plugin_manifest_t *							m_manifest;
 	std::string											m_lib_path;
-	void *												m_lib_handle;
+	dll_handle_t										m_lib_handle;
 
 	plugin_load_fn_t									m_load_fn;
 	plugin_unload_fn_t									m_unload_fn;

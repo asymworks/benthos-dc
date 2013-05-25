@@ -30,7 +30,12 @@
 
 #include <cerrno>
 #include <cstring>
+
+#if defined(_WIN32) || defined(WIN32)
+#include <Windows.h>
+#else
 #include <dlfcn.h>
+#endif
 
 #include <stdexcept>
 #include <string>
@@ -41,33 +46,83 @@
 
 using namespace benthos::dc;
 
+struct benthos::dc::dll_handle_t_
+{
+#if defined(_WIN32) || defined(WIN32)
+	HMODULE			h;
+#else
+	void *			h;
+#endif
+};
+
 Plugin::Plugin(const plugin_manifest_t * manifest, const std::string & lib_path)
 	: m_manifest(manifest), m_lib_path(lib_path), m_lib_handle(0),
 	  m_load_fn(0), m_unload_fn(0), m_driver_fn(0), m_driver_tables()
 {
+	m_lib_handle = new dll_handle_t_;
+
 	if (! m_manifest)
 		throw std::runtime_error("Invalid plugin manifest");
 
 	if (m_lib_path.empty())
 		throw std::runtime_error("Invalid library path");
 
-	// Open the Dynamic Library
-	m_lib_handle = dlopen(m_lib_path.c_str(), RTLD_LAZY);
-	if (! m_lib_handle)
-		throw std::runtime_error("Failed to load library: " + std::string(dlerror()));
+#if defined(_WIN32) || defined(WIN32)
+	// Open the DLL
+	m_lib_handle->h = LoadLibrary(m_lib_path.c_str());
+	if (! m_lib_handle->h)
+	{
+		static char buffer[256] = { 0 };
+		unsigned int size = sizeof(buffer) / sizeof(char);
+		DWORD err = GetLastError();
+		DWORD rc = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, err, 0, buffer, size, NULL);
+
+		// Remove certain characters ('\r', '\n' and '.')
+		// at the end of the error message.
+		while (rc > 0 && (
+				buffer[rc-1] == '\n' ||
+				buffer[rc-1] == '\r' ||
+				buffer[rc-1] == '.'))
+		{
+			buffer[rc-1] = '\0';
+			rc--;
+		}
+
+		throw std::runtime_error("Failed to load library: " + std::string(buffer));
+	}
 
 	// Load the Entry Points
-	m_load_fn = (plugin_load_fn_t)dlsym(m_lib_handle, "plugin_load");
+	m_load_fn = (plugin_load_fn_t)GetProcAddress(m_lib_handle->h, "plugin_load");
 	if (! m_load_fn)
 		throw std::runtime_error("Entry point 'plugin_load' does not exist in '" + m_lib_path);
 
-	m_unload_fn = (plugin_unload_fn_t)dlsym(m_lib_handle, "plugin_unload");
+	m_unload_fn = (plugin_load_fn_t)GetProcAddress(m_lib_handle->h, "plugin_unload");
 	if (! m_unload_fn)
 		throw std::runtime_error("Entry point 'plugin_unload' does not exist in '" + m_lib_path);
 
-	m_driver_fn = (plugin_driver_table_fn_t)dlsym(m_lib_handle, "plugin_load_driver");
+	m_driver_fn = (plugin_load_fn_t)GetProcAddress(m_lib_handle->h, "plugin_load_driver");
 	if (! m_driver_fn)
 		throw std::runtime_error("Entry point 'plugin_load_driver' does not exist in '" + m_lib_path);
+#else
+	// Open the Dynamic Library
+	m_lib_handle->h = dlopen(m_lib_path.c_str(), RTLD_LAZY);
+	if (! m_lib_handle->h)
+		throw std::runtime_error("Failed to load library: " + std::string(dlerror()));
+
+	// Load the Entry Points
+	m_load_fn = (plugin_load_fn_t)dlsym(m_lib_handle->h, "plugin_load");
+	if (! m_load_fn)
+		throw std::runtime_error("Entry point 'plugin_load' does not exist in '" + m_lib_path);
+
+	m_unload_fn = (plugin_unload_fn_t)dlsym(m_lib_handle->h, "plugin_unload");
+	if (! m_unload_fn)
+		throw std::runtime_error("Entry point 'plugin_unload' does not exist in '" + m_lib_path);
+
+	m_driver_fn = (plugin_driver_table_fn_t)dlsym(m_lib_handle->h, "plugin_load_driver");
+	if (! m_driver_fn)
+		throw std::runtime_error("Entry point 'plugin_load_driver' does not exist in '" + m_lib_path);
+#endif
 
 	// Initialize the Plugin
 	if (m_load_fn())
@@ -77,15 +132,21 @@ Plugin::Plugin(const plugin_manifest_t * manifest, const std::string & lib_path)
 Plugin::~Plugin()
 {
 	// Unload the Plugin
-	if (m_lib_handle != 0)
+	if (m_lib_handle->h != 0)
 	{
-		dlclose(m_lib_handle);
+#if defined(_WIN32) || defined(WIN32)
+		FreeLibrary(m_lib_handle->h);
+#else
+		dlclose(m_lib_handle->h);
+#endif
 
-		m_lib_handle = 0;
+		m_lib_handle->h = 0;
 		m_load_fn = 0;
 		m_unload_fn = 0;
 		m_driver_fn = 0;
 	}
+
+	delete m_lib_handle;
 }
 
 PluginRegistry::DriverClassPtr Plugin::driver(const std::string & name)
