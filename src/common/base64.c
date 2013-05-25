@@ -71,7 +71,7 @@ char * base64_encode(const unsigned char * data, size_t input_length, size_t * o
 	int i, j;
 
 	uint32_t octet_a;
-	uint32_t octet_c;
+	uint32_t octet_b;
 	uint32_t octet_c;
 	uint32_t triple;
 
@@ -104,7 +104,7 @@ char * base64_encode(const unsigned char * data, size_t input_length, size_t * o
 
 unsigned char * base64_decode(const char *data, size_t input_length, size_t *output_length)
 {
-	unsigned char * decoded_data
+	unsigned char * decoded_data;
 	int i, j;
 
 	uint32_t sextet_a;

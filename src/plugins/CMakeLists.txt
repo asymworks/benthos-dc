@@ -35,5 +35,5 @@
 add_definitions( -std=gnu99 -fPIC -g )
 
 # Build the plugins
-add_subdirectory(libdc)
+#add_subdirectory(libdc)
 add_subdirectory(smart)

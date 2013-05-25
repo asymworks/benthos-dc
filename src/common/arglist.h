@@ -63,7 +63,7 @@ void arglist_close(arglist_t args);
  * @param[in] Argument List
  * @return Number of Arguments
  */
-ssize_t arglist_count(arglist_t args);
+size_t arglist_count(arglist_t args);
 
 /**
  * @brief Check if an Argument is defined in the List

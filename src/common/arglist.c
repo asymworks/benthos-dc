@@ -20,6 +20,10 @@
  * 02110-1301, USA.
  */
 
+#if defined(_WIN32) || defined(WIN32)
+#include <Windows.h>
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,12 +62,12 @@ int arglist_parse(arglist_t * arglist, const char * argstring)
 	arglist_t entry;
 	arglist_t head = 0;
 	arglist_t cur = 0;
-	ssize_t p;
-	ssize_t l = strlen(argstring);
+	size_t p;
+	size_t l = strlen(argstring);
 
 	int in_name;
-	char name[258];		ssize_t nsize;
-	char value[258];	ssize_t vsize;
+	char name[258];		size_t nsize;
+	char value[258];	size_t vsize;
 
 	CHECK_ARGLIST_HANDLE(arglist)
 
@@ -204,9 +208,9 @@ void arglist_close(arglist_t args)
 	}
 }
 
-ssize_t arglist_count(arglist_t args)
+size_t arglist_count(arglist_t args)
 {
-	ssize_t c = 0;
+	size_t c = 0;
 	arglist_t entry = args;
 	while (entry != NULL)
 	{
