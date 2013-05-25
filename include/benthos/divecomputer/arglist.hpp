@@ -72,7 +72,7 @@ public:
 public:
 
 	//! @return Number of Parameters in the list
-	ssize_t count() const;
+	size_t count() const;
 
 	//! @return True if the Parameter List includes the given name
 	bool has(const std::string & name) const;

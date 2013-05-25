@@ -37,6 +37,9 @@
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */
 
+#include <utility>
+#include <vector>
+
 #include <boost/shared_ptr.hpp>
 
 #include <benthos/divecomputer/driverclass.hpp>

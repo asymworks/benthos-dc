@@ -62,7 +62,7 @@ ArgumentList::~ArgumentList()
 		arglist_close(m_pimpl->m_args);
 }
 
-ssize_t ArgumentList::count() const
+size_t ArgumentList::count() const
 {
 	return arglist_count(m_pimpl->m_args);
 }
