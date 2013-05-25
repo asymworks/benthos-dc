@@ -32,7 +32,28 @@
 #
 
 # C Flags
-add_definitions( -std=gnu99 -fPIC )
+if (NOT WIN32)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=gnu99")
+endif (NOT WIN32)
+
+# Setup for IrDA
+include(CheckIncludeFile)
+include(CheckFunctionExists)
+
+check_include_file(poll.h HAVE_POLL_H)
+check_include_file(sys/poll.h HAVE_SYS_POLL_H)
+check_include_file(sys/select.h HAVE_SYS_SELECT_H)
+
+check_function_exists(poll HAVE_POLL)
+check_function_exists(select HAVE_SELECT)
+
+if (NOT WIN32)
+    # Win32 always uses select()
+    set(HAVE_SELECT)
+endif (NOT WIN32)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Build the Common Objects
 add_library(common_module OBJECT
