@@ -51,6 +51,9 @@ SET(BENTHOS_DC_LIBDIR		"${CMAKE_INSTALL_PREFIX}/lib")
 SET(BENTHOS_DC_PLUGINDIR	"${CMAKE_INSTALL_PREFIX}/lib/benthos")
 SET(BENTHOS_DC_SPLUGINDIR	"${CMAKE_INSTALL_PREFIX}/lib/static/benthos")
 
+# Enforce C89 Builds for MSVC 10 Compatibility
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wdeclaration-after-statement -Werror=declaration-after-statement")
+
 # All source files are in the src directory
 add_subdirectory(src)
 

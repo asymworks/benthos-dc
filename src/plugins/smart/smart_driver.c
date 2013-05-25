@@ -26,6 +26,7 @@
 #include <time.h>
 
 #include <common/arglist.h>
+#include <common/util.h>
 
 #include "smart_driver.h"
 #include "smart_io.h"
@@ -55,18 +56,21 @@ void smart_driver_discover_cb(unsigned int address, const char * name, unsigned 
 time_t smart_driver_epoch()
 {
 	struct tm t;
+	char * tz_orig;
+	time_t epoch;
+
 	memset(& t, 0, sizeof(t));
 	t.tm_year = 100;
 	t.tm_mday = 1;
 
-	char * tz_orig = getenv("TZ");
+	tz_orig = getenv("TZ");
 	if (tz_orig)
 		tz_orig = strdup(tz_orig);
 
 	setenv("TZ", "UTC", 1);
 	tzset();
 
-	time_t epoch = mktime(& t) * 2;
+	epoch = mktime(& t) * 2;
 
 	if (tz_orig)
 	{
@@ -83,16 +87,16 @@ time_t smart_driver_epoch()
 
 int smart_driver_handshake(smart_device_t dev)
 {
-	if ((dev == NULL) || (dev->s == NULL))
-	{
-		errno = EINVAL;
-		return -1;
-	}
-
 	int rc;
 	unsigned char cmd1[] = { 0x1b };
 	unsigned char cmd2[] = { 0x1c, 0x10, 0x27, 0x00, 0x00 };
 	unsigned char ans;
+
+	if ((dev == NULL) || (dev->s == NULL))
+	{
+		BAD_POINTER()
+		return -1;
+	}
 
 	rc = smart_driver_cmd(dev, cmd1, 1, & ans, 1);
 	if ((rc != 0) || (ans != 0x01))
@@ -113,14 +117,15 @@ int smart_driver_handshake(smart_device_t dev)
 
 int smart_driver_create(dev_handle_t * abstract)
 {
+	smart_device_t sd;
 	smart_device_t * dev = (smart_device_t *)(abstract);
 	if (dev == NULL)
 	{
-		errno = EINVAL;
+		BAD_POINTER()
 		return -1;
 	}
 
-	smart_device_t sd = (smart_device_t)malloc(sizeof(struct smart_device_));
+	sd = (smart_device_t)malloc(sizeof(struct smart_device_));
 	if (sd == NULL)
 		return -1;
 
@@ -139,20 +144,26 @@ int smart_driver_create(dev_handle_t * abstract)
 
 int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * args)
 {
-	smart_device_t dev = (smart_device_t)(abstract);
-
-	if (dev == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
-
 	uint32_t chunk_size = 8;
 	uint32_t lsap = 1;
 	uint32_t irda_timeout = 2000;
 
+	int ndevs = 0;
+	int timeout = 0;
+	time_t hstime;
+
 	arglist_t arglist;
-	int rc = arglist_parse(& arglist, args);
+	int rc;
+
+	smart_device_t dev = (smart_device_t)(abstract);
+
+	if (dev == NULL)
+	{
+		BAD_POINTER()
+		return -1;
+	}
+
+	rc = arglist_parse(& arglist, args);
 	if (rc != 0)
 	{
 		dev->errcode = DRIVER_ERR_INVALID;
@@ -203,7 +214,7 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 	}
 
 	// Find a Uwatec Smart Device
-	int ndevs = irda_socket_discover(dev->s, & smart_driver_discover_cb, dev);
+	ndevs = irda_socket_discover(dev->s, & smart_driver_discover_cb, dev);
 	if (ndevs < 0)
 	{
 		dev->errcode = irda_errcode();
@@ -223,7 +234,6 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 	}
 
 	// Connect to the first Uwatec Smart Device
-	int timeout = 0;
 	rc = irda_socket_connect_lsap(dev->s, dev->epaddr, dev->lsap, & timeout);
 	if (rc != 0)
 	{
@@ -261,7 +271,7 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 	if (rc != 0)
 		return -1;
 
-	time_t hstime = time(NULL) * 2;
+	hstime = time(NULL) * 2;
 	dev->epoch = smart_driver_epoch();
 	dev->tcorr = hstime - dev->ticks;
 
@@ -332,19 +342,28 @@ int smart_driver_get_serial(dev_handle_t abstract, uint32_t * outval)
 
 int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size, device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata)
 {
-	smart_device_t dev = (smart_device_t)(abstract);
-	if (dev == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
+	static unsigned char cmd1[] = { 0xc6, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
+	static unsigned char cmd2[] = { 0xc4, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
 
-	// Send the Device Callback and retrieve the Token
 	char * stoken = 0;
 	int free_token = 0;
 	uint32_t token = 0;
 	int rc;
 
+	int timeout = 0;
+	int cancel = 0;
+	uint32_t len = (* size);
+	uint32_t nb;
+	uint32_t pos;
+
+	smart_device_t dev = (smart_device_t)(abstract);
+	if (dev == NULL)
+	{
+		BAD_POINTER();
+		return -1;
+	}
+
+	// Send the Device Callback and retrieve the Token
 	if (dcb != NULL)
 	{
 		rc = dcb(userdata, dev->model, dev->serial, dev->ticks, & stoken, & free_token);
@@ -373,7 +392,6 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 	}
 
 	// Read the Transfer Length
-	unsigned char cmd1[] = { 0xc6, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
 	* (uint32_t *)(& cmd1[1]) = token;
 	rc = smart_driver_cmd(dev, cmd1, 9, (unsigned char *)(size), 4);
 	if (rc != 0)
@@ -390,13 +408,6 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 		dev->errmsg = "Unable to allocate transfer data buffer";
 		return -1;
 	}
-
-	unsigned char cmd2[] = { 0xc4, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
-	int timeout = 0;
-	int cancel = 0;
-	uint32_t len = (* size);
-	uint32_t nb;
-	uint32_t pos;
 
 	* (uint32_t *)(& cmd2[1]) = token;
 
@@ -472,21 +483,20 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 
 int smart_driver_extract(dev_handle_t abstract, void * buffer, uint32_t size, divedata_callback_fn_t cb, void * userdata)
 {
-	smart_device_t dev = (smart_device_t)(abstract);
-
-	if (dev == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
-
-	unsigned char * data = (unsigned char *)buffer;
-
 	char token[20];
 	uint8_t hdr[4] = { 0xa5, 0xa5, 0x5a, 0x5a };
 	uint32_t dlen = 0;
 	uint32_t tok = 0;
 	uint32_t pos = 0;
+
+	unsigned char * data = (unsigned char *)buffer;
+	smart_device_t dev = (smart_device_t)(abstract);
+
+	if ((dev == NULL) || (buffer == NULL))
+	{
+		BAD_POINTER();
+		return -1;
+	}
 
 	while (pos < size)
 	{

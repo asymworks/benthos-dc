@@ -25,22 +25,23 @@
 #include <string.h>
 
 #include <benthos/divecomputer/plugin/plugin.h>
+#include <common/util.h>
 
 #include "smart_driver.h"
 #include "smart_io.h"
 
 int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, ssize_t cmdlen, unsigned char * ans, ssize_t anslen)
 {
-	if ((dev == NULL) || (dev->s == NULL))
-	{
-		errno = EINVAL;
-		return -1;
-	}
-
 	int rc;
 	int timeout = 0;
 	ssize_t _cmdlen = cmdlen;
 	ssize_t _anslen = anslen;
+
+	if ((dev == NULL) || (dev->s == NULL))
+	{
+		BAD_POINTER()
+		return -1;
+	}
 
 	rc = irda_socket_write(dev->s, cmd, & _cmdlen, & timeout);
 	if (rc != 0)

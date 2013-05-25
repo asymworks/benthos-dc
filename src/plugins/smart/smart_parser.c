@@ -24,6 +24,7 @@
 #include <stdlib.h>
 
 #include <common/unpack.h>
+#include <common/util.h>
 
 #include "smart_driver.h"
 #include "smart_io.h"
@@ -218,16 +219,17 @@ static const dti_entry_t smart_tec_table[] =
 
 int smart_parser_create(parser_handle_t * abstract, dev_handle_t abstract_dev)
 {
+	smart_parser_t p;
 	smart_parser_t * parser = (smart_parser_t *)(abstract);
 	smart_device_t dev = (smart_device_t)(abstract_dev);
 
 	if ((parser == NULL) || (dev == NULL))
 	{
-		errno = EINVAL;
+		BAD_POINTER()
 		return -1;
 	}
 
-	smart_parser_t p = (smart_parser_t)malloc(sizeof(struct smart_parser_));
+	p = (smart_parser_t)malloc(sizeof(struct smart_parser_));
 	if (p == NULL)
 		return -1;
 
@@ -302,7 +304,10 @@ void smart_parser_close(parser_handle_t abstract)
 {
 	smart_parser_t parser = (smart_parser_t)(abstract);
 	if (parser == NULL)
+	{
+		BAD_POINTER()
 		return;
+	}
 
 	free(parser);
 }
@@ -310,6 +315,11 @@ void smart_parser_close(parser_handle_t abstract)
 int smart_parser_reset(parser_handle_t abstract)
 {
 	smart_parser_t parser = (smart_parser_t)(abstract);
+	if (parser == NULL)
+	{
+		BAD_POINTER()
+		return -1;
+	}
 
 	parser->time = 0;
 	parser->depth = 0;
@@ -340,10 +350,18 @@ int smart_parser_reset(parser_handle_t abstract)
 
 void smart_parse_smart_pro_header(const unsigned char * buffer, int32_t tcorr, header_callback_fn_t cb, void * userdata)
 {
+	time_t dtime;
+
+	if (buffer == NULL)
+	{
+		BAD_POINTER()
+		return;
+	}
+
 	if (! cb)
 		return;
 
-	time_t dtime = (uint32_le(buffer, 8) + tcorr) / 2;
+	dtime = (uint32_le(buffer, 8) + tcorr) / 2;
 
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_VENDOR,			uint16_le(buffer, 16),			0,	"alarms");				// Alarms During Dive
@@ -372,11 +390,20 @@ void smart_parse_smart_pro_header(const unsigned char * buffer, int32_t tcorr, h
 
 void smart_parse_galileo_sol_header(const unsigned char * buffer, int32_t tcorr, header_callback_fn_t cb, void * userdata)
 {
+	int16_t utcoff;
+	time_t dtime;
+
+	if (buffer == NULL)
+	{
+		BAD_POINTER()
+		return;
+	}
+
 	if (! cb)
 		return;
 
-	int16_t utcoff = ((char *)buffer)[16];
-	time_t dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
+	utcoff = ((char *)buffer)[16];
+	dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
 
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_UTC_OFFSET,		utcoff * 15,					0,	0);						// UTC Offset
@@ -421,11 +448,20 @@ void smart_parse_galileo_sol_header(const unsigned char * buffer, int32_t tcorr,
 
 void smart_parse_aladin_tec_header(const unsigned char * buffer, int32_t tcorr, header_callback_fn_t cb, void * userdata)
 {
+	int16_t utcoff;
+	time_t dtime;
+
+	if (buffer == NULL)
+	{
+		BAD_POINTER()
+		return;
+	}
+
 	if (! cb)
 		return;
 
-	int16_t utcoff = ((char *)buffer)[16];
-	time_t dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
+	utcoff = ((char *)buffer)[16];
+	dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
 
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_UTC_OFFSET,		utcoff * 15,					0,	0);						// UTC Offset
@@ -457,11 +493,20 @@ void smart_parse_aladin_tec_header(const unsigned char * buffer, int32_t tcorr, 
 
 void smart_parse_aladin_tec2g_header(const unsigned char * buffer, int32_t tcorr, header_callback_fn_t cb, void * userdata)
 {
+	int16_t utcoff;
+	time_t dtime;
+
+	if (buffer == NULL)
+	{
+		BAD_POINTER()
+		return;
+	}
+
 	if (! cb)
 		return;
 
-	int16_t utcoff = ((char *)buffer)[16];
-	time_t dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
+	utcoff = ((char *)buffer)[16];
+	dtime = (uint32_le(buffer, 8) + tcorr + utcoff * 1800) / 2;
 
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_UTC_OFFSET,		utcoff * 15,					0,	0);						// UTC Offset
@@ -499,10 +544,18 @@ void smart_parse_aladin_tec2g_header(const unsigned char * buffer, int32_t tcorr
 
 void smart_parse_smart_com_header(const unsigned char * buffer, int32_t tcorr, header_callback_fn_t cb, void * userdata)
 {
+	time_t dtime;
+
+	if (buffer == NULL)
+	{
+		BAD_POINTER()
+		return;
+	}
+
 	if (! cb)
 		return;
 
-	time_t dtime = (uint32_le(buffer, 8) + tcorr) / 2;
+	dtime = (uint32_le(buffer, 8) + tcorr) / 2;
 
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_VENDOR,			uint16_le(buffer, 16),			0,	"alarms");				// Alarms During Dive
@@ -524,10 +577,18 @@ void smart_parse_smart_com_header(const unsigned char * buffer, int32_t tcorr, h
 
 void smart_parse_smart_tec_header(const unsigned char * buffer, int32_t tcorr, header_callback_fn_t cb, void * userdata)
 {
+	time_t dtime;
+
+	if (buffer == NULL)
+	{
+		BAD_POINTER()
+		return;
+	}
+
 	if (! cb)
 		return;
 
-	time_t dtime = (uint32_le(buffer, 8) + tcorr) / 2;
+	dtime = (uint32_le(buffer, 8) + tcorr) / 2;
 
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_VENDOR,			uint16_le(buffer, 16),			0,	"alarms");				// Alarms During Dive
@@ -567,10 +628,18 @@ void smart_parse_smart_tec_header(const unsigned char * buffer, int32_t tcorr, h
 
 void smart_parse_smart_z_header(const unsigned char * buffer, int32_t tcorr, header_callback_fn_t cb, void * userdata)
 {
+	time_t dtime;
+
+	if (buffer == NULL)
+	{
+		BAD_POINTER()
+		return;
+	}
+
 	if (! cb)
 		return;
 
-	time_t dtime = (uint32_le(buffer, 8) + tcorr) / 2;
+	dtime = (uint32_le(buffer, 8) + tcorr) / 2;
 
 	cb(userdata,	DIVE_HEADER_START_TIME,		dtime,							0,	0);						// Dive Date/Time
 	cb(userdata,	DIVE_HEADER_VENDOR,			uint16_le(buffer, 16),			0,	"alarms");				// Alarms During Dive
@@ -602,10 +671,12 @@ void smart_parse_smart_z_header(const unsigned char * buffer, int32_t tcorr, hea
 
 int smart_parser_parse_header(parser_handle_t abstract, const void * buffer, uint32_t size, header_callback_fn_t cb, void * userdata)
 {
+	uint32_t psize;
+
 	smart_parser_t parser = (smart_parser_t)(abstract);
-	if (parser == NULL)
+	if ((parser == NULL) || (buffer == NULL))
 	{
-		errno = EINVAL;
+		BAD_POINTER();
 		return -1;
 	}
 
@@ -616,7 +687,7 @@ int smart_parser_parse_header(parser_handle_t abstract, const void * buffer, uin
 		return -1;
 	}
 
-	uint32_t psize =  uint32_le((const unsigned char *)buffer, 4);
+	psize =  uint32_le((const unsigned char *)buffer, 4);
 	if (psize != size)
 	{
 		parser->dev->errcode = DRIVER_ERR_INVALID;
@@ -668,14 +739,16 @@ int smart_parser_parse_header(parser_handle_t abstract, const void * buffer, uin
 
 static uint8_t smart_identify(const unsigned char * data, uint32_t size)
 {
+	uint8_t value;
+	uint8_t mask;
 	uint8_t count = 0;
 	uint8_t i, j;
-	for (uint8_t i = 0; i < ((size > NBYTES) ? NBYTES : size); ++i)
+	for (i = 0; i < ((size > NBYTES) ? NBYTES : size); ++i)
 	{
-		uint8_t value = data[i];
-		for (uint8_t j = 0; j < NBITS; ++j)
+		value = data[i];
+		for (j = 0; j < NBITS; ++j)
 		{
-			uint8_t mask = (1 << (NBITS - 1 - j));
+			mask = (1 << (NBITS - 1 - j));
 			if ((value & mask) == 0)
 				return count;
 
@@ -702,11 +775,14 @@ static uint8_t galileo_identify(const unsigned char value)
 
 static uint32_t smart_fixsignbit(uint32_t x, uint32_t n)
 {
+	uint32_t signbit;
+	uint32_t mask;
+
 	if ((n == 0) || (n > 32))
 		return 0;
 
-	uint32_t signbit = (1 << (n - 1));
-	uint32_t mask = (0xFFFFFFFF << n);
+	signbit = (1 << (n - 1));
+	mask = (0xFFFFFFFF << n);
 
 	if ((x & signbit) == signbit)
 		return x | mask;
@@ -716,12 +792,16 @@ static uint32_t smart_fixsignbit(uint32_t x, uint32_t n)
 int smart_process_dti(smart_parser_t parser, const unsigned char * data, uint32_t size,
 		uint32_t * offset, const dti_entry_t * dti, uint32_t * value, int32_t * svalue)
 {
+	uint8_t nbits;
+	uint8_t i;
+	uint8_t n;
+
 	// Skip the Processed Type Bits
 	*offset += dti->ntb / NBITS;
 
 	// Process Remaining Bits
-	uint8_t nbits = 0;
-	uint8_t n = dti->ntb % NBITS;
+	nbits = 0;
+	n = dti->ntb % NBITS;
 	if (n > 0)
 	{
 		nbits = NBITS - n;
@@ -744,7 +824,7 @@ int smart_process_dti(smart_parser_t parser, const unsigned char * data, uint32_
 	}
 
 	// Process Extra Bits
-	for (uint8_t i = 0; i < dti->extra; ++i)
+	for (i = 0; i < dti->extra; ++i)
 	{
 		nbits += NBITS;
 		(*value) <<= NBITS;
@@ -866,10 +946,11 @@ int smart_parse_dti(smart_parser_t parser, const dti_entry_t * dti, uint32_t val
 
 const char * alarm_name(smart_parser_t parser, uint8_t idx, uint8_t mask)
 {
+	int i;
+
 	if ((parser == NULL) || ! parser->alarm_size)
 		return 0;
 
-	int i;
 	for (i = 0; i < parser->alarm_size; ++i)
 	{
 		if ((parser->alarm_table[i].idx == idx) && (parser->alarm_table[i].mask == mask))
@@ -881,10 +962,14 @@ const char * alarm_name(smart_parser_t parser, uint8_t idx, uint8_t mask)
 
 int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, uint32_t size, waypoint_callback_fn_t cb, void * userdata)
 {
+	const unsigned char * data;
+	uint32_t psize;
+	uint32_t offset;
+
 	smart_parser_t parser = (smart_parser_t)(abstract);
-	if (parser == NULL)
+	if ((parser == NULL) || (buffer == NULL))
 	{
-		errno = EINVAL;
+		BAD_POINTER();
 		return -1;
 	}
 
@@ -895,7 +980,7 @@ int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, ui
 		return -1;
 	}
 
-	uint32_t psize =  uint32_le((const unsigned char *)buffer, 4);
+	psize =  uint32_le((const unsigned char *)buffer, 4);
 	if (psize != size)
 	{
 		parser->dev->errcode = DRIVER_ERR_INVALID;
@@ -903,12 +988,15 @@ int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, ui
 		return -1;
 	}
 
-	const unsigned char * data = (const unsigned char *)buffer;
-	uint32_t offset = parser->hdr_size;
+	data = (const unsigned char *)buffer;
+	offset = parser->hdr_size;
 	while (offset < size)
 	{
 		// Find the DTI Entry
 		uint8_t id = 0;
+		uint32_t value = 0;
+		int32_t svalue = 0;
+
 		if (parser->dev->model == MDL_GALILEO_SOL)
 			id = galileo_identify(data[offset]);
 		else
@@ -922,9 +1010,6 @@ int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, ui
 		}
 
 		// Process the DTI
-		uint32_t value = 0;
-		int32_t svalue = 0;
-
 		if (smart_process_dti(parser, data, size, & offset, & parser->dti_table[id], & value, & svalue) != 0)
 			return -1;
 
@@ -969,9 +1054,12 @@ int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, ui
 			// Send Alarm Data
 			if (parser->have_alarms)
 			{
-				for (uint8_t i = 0; i < 3; i++)
+				uint8_t i;
+				uint8_t j;
+
+				for (i = 0; i < 3; i++)
 				{
-					for (uint8_t j = 0; j < 9; j++)
+					for (j = 0; j < 9; j++)
 					{
 						uint16_t mask = (1 << j);
 						if (((parser->alarms[i] & mask) == mask) && cb)
