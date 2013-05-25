@@ -39,6 +39,7 @@
 
 #include <string>
 
+#include <benthos/divecomputer/exports.hpp>
 #include <benthos/divecomputer/plugin/plugin.h>
 #include <benthos/divecomputer/registry.hpp>
 
@@ -54,7 +55,7 @@ typedef struct dll_handle_t_ *		dll_handle_t;
  * Provides a wrapper around a plugin, with an object-oriented interface to the
  * plugin attributes as well as managing the shared library lifetime.
  */
-class Plugin
+class BENTHOS_API Plugin
 {
 public:
 	typedef boost::shared_ptr<Plugin>	Ptr;

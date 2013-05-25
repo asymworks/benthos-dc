@@ -41,6 +41,7 @@
 #include <map>
 #include <string>
 
+#include <benthos/divecomputer/exports.hpp>
 #include <benthos/divecomputer/plugin.hpp>
 
 namespace benthos { namespace dc
@@ -56,7 +57,7 @@ class Driver;
  * class provides basic factory methods for Devices and provides an object-
  * oriented interface to driver properties.
  */
-class DriverClass
+class BENTHOS_API DriverClass
 {
 public:
 	typedef boost::shared_ptr<DriverClass>	Ptr;

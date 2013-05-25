@@ -43,6 +43,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <benthos/divecomputer/driverclass.hpp>
+#include <benthos/divecomputer/exports.hpp>
 #include <benthos/divecomputer/plugin.hpp>
 
 namespace benthos { namespace dc
@@ -57,7 +58,7 @@ typedef std::pair<dive_buffer_t, std::string>			dive_entry_t;
  * Encapsulates a connection to a device.  This class may not be created
  * directly; instead use the factory method provided by DriverClass.
  */
-class Driver
+class BENTHOS_API Driver
 {
 public:
 	typedef boost::shared_ptr<Driver>	Ptr;

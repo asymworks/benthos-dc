@@ -46,7 +46,7 @@ find_package( LibXml2 2.7 REQUIRED )
 
 # Include Paths
 include_directories(
-	${Boost_INCLUDE_DIR},
+	${Boost_INCLUDE_DIR}
 	${LIBXML2_INCLUDE_DIR}
 )
 

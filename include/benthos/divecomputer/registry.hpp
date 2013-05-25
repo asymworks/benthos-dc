@@ -45,6 +45,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <benthos/divecomputer/exports.hpp>
+
 namespace benthos { namespace dc
 {
 
@@ -153,7 +155,7 @@ class DriverClass;
  * BENTHOS_DC_PLUGINDIR defined, they will be added to the search paths by
  * default.
  */
-class PluginRegistry
+class BENTHOS_API PluginRegistry
 {
 public:
 	typedef boost::shared_ptr<PluginRegistry>	Ptr;

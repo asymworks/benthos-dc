@@ -41,6 +41,8 @@
 
 #include <boost/optional.hpp>
 
+#include <benthos/divecomputer/exports.hpp>
+
 namespace benthos { namespace dc
 {
 
@@ -52,7 +54,7 @@ namespace benthos { namespace dc
  * given argument list and provides C++ methods to query the argument list and
  * retrieve values.
  */
-class ArgumentList
+class BENTHOS_API ArgumentList
 {
 private:
 	struct	_impl;

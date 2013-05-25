@@ -32,7 +32,9 @@
 #
 
 # C Flags
-add_definitions( -std=gnu99 -fPIC -g )
+if (NOT WIN32)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -fPIC -g")
+endif (NOT WIN32)
 
 # Build the plugins
 #add_subdirectory(libdc)
