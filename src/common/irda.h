@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Asymworks, LLC.  All Rights Reserved.
+ * Copyright (C) 2013 Asymworks, LLC.  All Rights Reserved.
  * www.asymworks.com / info@asymworks.com
  *
  * This file is part of the Benthos Dive Log Package (benthos-log.com)
@@ -20,12 +20,6 @@
  * 02110-1301, USA.
  */
 
-/*
- * The majority of this IrDA driver package was adapted from libdivecomputer,
- * Copyright (C) 2008 Jef Driesen.  libdivecomputer can be found online at
- * http://www.divesoftware.org/libdc/
- */
-
 #ifndef IRDA_H_
 #define IRDA_H_
 
@@ -33,7 +27,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include <unistd.h>
+#include <stddef.h>		// size_t
 
 /**
  * @brief IrDA Socket Handle Type
@@ -196,7 +190,7 @@ int irda_socket_available(irda_t s);
  * of bytes read.  In case of timeout or error this may be less than the passed
  * size value.
  */
-int irda_socket_read(irda_t s, void * data, ssize_t * size, int * timeout);
+int irda_socket_read(irda_t s, void * data, size_t * size, int * timeout);
 
 /**
  * @brief Write data to the IrDA Socket
@@ -213,7 +207,7 @@ int irda_socket_read(irda_t s, void * data, ssize_t * size, int * timeout);
  * of bytes written.  In case of timeout or error this may be less than the
  * passed size value.
  */
-int irda_socket_write(irda_t s, const void * data, ssize_t * size, int * timeout);
+int irda_socket_write(irda_t s, const void * data, size_t * size, int * timeout);
 
 #ifdef __cplusplus
 }

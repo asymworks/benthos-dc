@@ -32,7 +32,9 @@
 #
 
 # C Flags
-add_definitions( -std=gnu99 -fPIC )
+if (NOT WIN32)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -std=gnu99")
+endif (NOT WIN32)
 
 # Build the Common Objects
 add_library(common_module OBJECT
