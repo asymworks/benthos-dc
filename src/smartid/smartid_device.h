@@ -39,7 +39,7 @@
 
 #include <stdint.h>
 
-#include "irda.h"
+#include <common-irda/irda.h>
 
 //! Smart Device Handle
 typedef struct smart_device_t_ * smart_device_t;

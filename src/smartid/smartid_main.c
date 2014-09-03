@@ -53,7 +53,8 @@
 
 #include <event2/event.h>
 
-#include "irda.h"
+#include <common-irda/irda.h>
+
 #include "smartid_logging.h"
 #include "smartid_server.h"
 #include "smartid_version.h"
@@ -152,8 +153,6 @@ int smartid_parse_args(int argc, char ** argv, int * exit)
 	int port_arg = -1;
 	int ip4_flag = 0;
 	int ip6_flag = 0;
-	int show_help = 0;
-	int show_version = 0;
 
 	/* Initialize Defaults */
 	g_debug = 0;
@@ -452,7 +451,11 @@ int main(int argc, char ** argv)
 			return 1;
 		}
 
+#ifdef BDC_64BIT
+		fprintf(fp_pid, "%u", pid);
+#else
 		fprintf(fp_pid, "%lu", pid);
+#endif
 		fflush(fp_pid);
 		fclose(fp_pid);
 

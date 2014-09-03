@@ -38,7 +38,8 @@
 #include <event2/event.h>
 #include <event2/util.h>
 
-#include "smarti_codes.h"
+#include <benthos/smarti/smarti_codes.h>
+
 #include "smartid_conn.h"
 #include "smartid_cmd.h"
 #include "smartid_logging.h"
@@ -354,7 +355,11 @@ static void smartid_cmd_open(smarti_conn_t c, struct smarti_cmd_t * cmd, const c
 		return;
 	}
 
+#ifdef BDC_64BIT
+	if (sscanf(params, "%u %u %lu", & addr, & lsap, & chunk_size) < 1)
+#else
 	if (sscanf(params, "%lu %lu %lu", & addr, & lsap, & chunk_size) < 1)
+#endif
 	{
 		smartid_conn_send_responsef(c, SMARTI_ERROR_INVALID_COMMAND, "Invalid device address '%s'", params);
 		smartid_log_warning("Syntax error in command '%s': invalid parameter", cmd->name);
@@ -524,7 +529,11 @@ static void smartid_cmd_token(smarti_conn_t c, struct smarti_cmd_t * cmd, const 
 	CHECK_PARAMS
 	CHECK_DEVICE
 
+#ifdef BDC_64BIT
+	if (sscanf(params, "%u", & token) != 1)
+#else
 	if (sscanf(params, "%lu", & token) != 1)
+#endif
 	{
 		smartid_conn_send_responsef(c, SMARTI_ERROR_INVALID_COMMAND, "Invalid token '%s'", params);
 		smartid_log_warning("Syntax error in command '%s': invalid parameter", cmd->name);

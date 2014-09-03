@@ -47,9 +47,11 @@
 #include <event2/event.h>
 #include <event2/util.h>
 
-#include "base64.h"
-#include "irda.h"
-#include "smarti_codes.h"
+#include <common-irda/irda.h>
+
+#include <benthos/divecomputer/base64.h>
+#include <benthos/smarti/smarti_codes.h>
+
 #include "smartid_cmd.h"
 #include "smartid_conn.h"
 #include "smartid_device.h"

@@ -154,8 +154,6 @@ void smartid_cleanup(void)
 int smartid_start(int listenfd, const char * saddr, int sport)
 {
 	int rv;
-	struct event_base * evloop;
-
 
 	/* Make the Socket Non-Blocking */
 	rv = evutil_make_socket_nonblocking(listenfd);

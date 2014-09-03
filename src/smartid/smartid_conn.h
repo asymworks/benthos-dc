@@ -39,8 +39,10 @@
  * Functions to handle client connections in the Smart-I Daemon.
  */
 
-#include "irda.h"
-#include "smarti_codes.h"
+#include <benthos/smarti/smarti_codes.h>
+
+#include <common-irda/irda.h>
+
 #include "smartid_device.h"
 #include "smartid_version.h"
 

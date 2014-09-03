@@ -41,8 +41,10 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "irda.h"
-#include "smarti_codes.h"
+#include <common-irda/irda.h>
+
+#include <benthos/smarti/smarti_codes.h>
+
 #include "smartid_device.h"
 #include "smartid_logging.h"
 
@@ -74,8 +76,8 @@ int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, ssize_t cmdlen, un
 
 	int rc;
 	int timeout = 0;
-	ssize_t _cmdlen = cmdlen;
-	ssize_t _anslen = anslen;
+	size_t _cmdlen = cmdlen;
+	size_t _anslen = anslen;
 
 	rc = irda_socket_write(dev->s, cmd, & _cmdlen, & timeout);
 	if (rc != 0)

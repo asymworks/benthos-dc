@@ -70,6 +70,11 @@ else(WIN32)
   endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif(WIN32)
 
+# 32/64-bit Detection
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  add_definitions( -DBDC_64BIT )
+endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
+
 # Linux needs _XOPEN_SOURCE and POSIX 200809 defined
 if(BDC_OS_LINUX)
   add_definitions( -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=200809L )
