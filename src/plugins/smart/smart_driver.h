@@ -45,8 +45,37 @@ extern "C" {
 
 #include <stdint.h>
 
+#include <common-irda/irda.h>
+#include <common-smart/smart_device_base.h>
+
 #include <benthos/divecomputer/plugin/driver.h>
 #include <benthos/divecomputer/plugin/plugin.h>
+
+/* Smart Device Structure Magic Number */
+#define SMART_DEV_MAGIC		0x5347
+
+/* Smart Device Structure */
+struct smart_device_
+{
+	/* Must be First Member */
+	struct smart_device_base_t	base;		///< Smart Device Base
+
+	irda_t						s;			///< IrDA Socket
+
+	unsigned int				epaddr;		///< IrDA Endpoint Address
+	char *						epname;		///< IrDA Endpoint Name
+	const char *				devname;	///< Device Name
+
+	int							lsap;		///< IrDA LSAP Identifier
+	unsigned int				csize;		///< IrDA ChunK Size
+
+};
+
+/* Smart-I Device Handle */
+typedef struct smart_device_ *		smart_device_t;
+
+/* Check Device Handle and Magic Number */
+#define CHECK_DEV(d) (d && (((struct smart_device_base_t *)(d))->magic == SMART_DEV_MAGIC))
 
 /**@{
  * @name Driver Functions

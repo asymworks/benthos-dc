@@ -31,6 +31,11 @@
 # WITH THE SOFTWARE.
 #
 
+# Linux needs C++11
+if(BDC_OS_LINUX)
+  add_definitions( -std=c++11 )
+endif(BDC_OS_LINUX)
+
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON) 
 set(Boost_USE_STATIC_RUNTIME OFF)

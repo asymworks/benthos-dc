@@ -31,6 +31,11 @@
 # WITH THE SOFTWARE.
 #
 
+# Linux needs PIC to be used in both static and shared linkages
+if(BDC_OS_LINUX)
+  add_definitions( -fPIC )
+endif(BDC_OS_LINUX)
+
 # Build the Common Smart Module
 add_library(common_smart OBJECT
     smart_extract.c

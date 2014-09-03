@@ -33,32 +33,6 @@
 #include "smart_driver.h"
 #include "smart_io.h"
 
-/* Smart Device Structure Magic Number */
-#define SMART_DEV_MAGIC		0x5347
-
-/* Smart Device Structure */
-struct smart_device_
-{
-	/* Must be First Member */
-	struct smart_device_base_t	base;		///< Smart Device Base
-
-	irda_t						s;			///< IrDA Socket
-
-	unsigned int				epaddr;		///< IrDA Endpoint Address
-	const char *				epname;		///< IrDA Endpoint Name
-	const char *				devname;	///< Device Name
-
-	int							lsap;		///< IrDA LSAP Identifier
-	unsigned int				csize;		///< IrDA ChunK Size
-
-};
-
-/* Smart-I Device Handle */
-typedef struct smart_device_ *		smart_device_t;
-
-/* Check Device Handle and Magic Number */
-#define CHECK_DEV(d) (d && (((struct smart_device_base_t *)(d))->magic == SMART_DEV_MAGIC))
-
 void smart_driver_discover_cb(unsigned int address, const char * name, unsigned int charset, unsigned int hints, void * userdata)
 {
 	smart_device_t dev = (smart_device_t)(userdata);
@@ -188,7 +162,7 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 
 	uint32_t chunk_size = 8;
 	uint32_t lsap = 1;
-	uint32_t irda_timeout = 2000;
+	int32_t irda_timeout = 2000;
 
 	/* Check Magic Number */
 	if (! CHECK_DEV(dev))
@@ -197,7 +171,7 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 		return DRIVER_ERR_INVALID;
 	}
 
-	int rc = arglist_parse(& arglist, args);
+	rc = arglist_parse(& arglist, args);
 	if (rc != 0)
 	{
 		smart_device_set_error(dev->base, DRIVER_ERR_INVALID, "Invalid Argument String", 0);
@@ -317,7 +291,7 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 
 	/* Calculate Time Correction */
 	time_t hstime = time(NULL) * 2;
-	dev->base.epoch = smarti_driver_epoch();
+	dev->base.epoch = smart_driver_epoch();
 	dev->base.tcorr = hstime - dev->base.ticks;
 
 	/* Success */
@@ -515,7 +489,7 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 	pos = 0;
 	while (len > 0)
 	{
-		ssize_t nt;
+		size_t nt;
 
 		if (len > dev->csize)
 			nt = dev->csize;
