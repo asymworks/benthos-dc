@@ -26,6 +26,8 @@
 
 #include <benthos/divecomputer/plugin/plugin.h>
 
+#include <common-smart/smart_device_base.h>
+
 #include "smart_driver.h"
 #include "smart_io.h"
 
@@ -34,7 +36,7 @@ int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, ssize_t cmdlen, un
 	if ((dev == NULL) || (dev->s == NULL))
 	{
 		errno = EINVAL;
-		return -1;
+		return DRIVER_ERR_INVALID;
 	}
 
 	int rc;
@@ -45,31 +47,27 @@ int smart_driver_cmd(smart_device_t dev, unsigned char * cmd, ssize_t cmdlen, un
 	rc = irda_socket_write(dev->s, cmd, & _cmdlen, & timeout);
 	if (rc != 0)
 	{
-		dev->errcode = DRIVER_ERR_WRITE;
-		dev->errmsg = "Failed to write bytes to the Uwatec Smart device";
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_WRITE, "Failed to write bytes to the Uwatec Smart device", 0);
+		return DRIVER_ERR_WRITE;
 	}
 
 	if (timeout)
 	{
-		dev->errcode = DRIVER_ERR_TIMEOUT;
-		dev->errmsg = "Timed out writing data to the Uwatec Smart device";
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_TIMEOUT, "Timed out writing data to the Uwatec Smart device", 0);
+		return DRIVER_ERR_TIMEOUT;
 	}
 
 	rc = irda_socket_read(dev->s, ans, & _anslen, & timeout);
 	if (rc != 0)
 	{
-		dev->errcode = DRIVER_ERR_READ;
-		dev->errmsg = "Failed to read bytes to the Uwatec Smart device";
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_READ, "Failed to read bytes from the Uwatec Smart device", 0);
+		return DRIVER_ERR_READ;
 	}
 
 	if (timeout)
 	{
-		dev->errcode = DRIVER_ERR_TIMEOUT;
-		dev->errmsg = "Timed out reading data from the Uwatec Smart device";
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_TIMEOUT, "Timed out reading data from the Uwatec Smart device", 0);
+		return DRIVER_ERR_TIMEOUT;
 	}
 
 	return 0;

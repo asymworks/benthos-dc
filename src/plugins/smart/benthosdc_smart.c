@@ -22,11 +22,11 @@
 
 #include <string.h>
 
-#include <common/irda.h>
+#include <common-irda/irda.h>
+#include <common-smart/smart_parser.h>
 
 #include "benthosdc_smart.h"
 #include "smart_driver.h"
-#include "smart_parser.h"
 
 static const driver_interface_t smart_driver_interface =
 {

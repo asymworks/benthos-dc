@@ -2,7 +2,7 @@
 # CMake File for the Benthos Dive Computer Library (benthos_dc)
 #------------------------------------------------------------------------------
 #
-# Copyright (C) 2011 Asymworks, LLC.  All Rights Reserved.
+# Copyright (C) 2014 Asymworks, LLC.  All Rights Reserved.
 #
 # Developed by: Asymworks, LLC <info@asymworks.com>
 # 				 http://www.asymworks.com
@@ -36,8 +36,9 @@ add_library(smart SHARED
 	benthosdc_smart.c
 	smart_driver.c
 	smart_io.c
-	smart_parser.c
-	$<TARGET_OBJECTS:common_module>
+	$<TARGET_OBJECTS:common_irda>
+	$<TARGET_OBJECTS:common_smart>
+	$<TARGET_OBJECTS:common_util>
 )
 
 # Link the Uwatec Smart Plugin

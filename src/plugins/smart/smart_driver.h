@@ -44,35 +44,13 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <time.h>
 
 #include <benthos/divecomputer/plugin/driver.h>
 #include <benthos/divecomputer/plugin/plugin.h>
 
-#include <common/irda.h>
-
-//! Uwatec Smart Device Structure
-struct smart_device_
-{
-	irda_t			s;			///< IrDA Socket
-	int				errcode;	///< Last Error Code
-	const char *	errmsg;		///< Last Error Message
-
-	unsigned int	epaddr;		///< IrDA Endpoint Address
-	const char *	epname;		///< IrDA Endpoint Name
-	const char *	devname;	///< Device Name
-
-	int				lsap;		///< IrDA LSAP Identifier
-	unsigned int	csize;		///< IrDA ChunK Size
-
-	time_t			epoch;		///< Epoch in Half-Seconds
-	int32_t			tcorr;		///< Time Correction Value
-
-	uint8_t			model;		///< Model Number
-	uint32_t		serial;		///< Serial Number
-	uint32_t		ticks;		///< Tick Count
-};
-
+/**@{
+ * @name Driver Functions
+ */
 int smart_driver_create(dev_handle_t * dev);
 int smart_driver_open(dev_handle_t dev, const char *, const char * args);
 void smart_driver_close(dev_handle_t dev);
@@ -86,6 +64,7 @@ int smart_driver_get_serial(dev_handle_t dev, uint32_t * outval);
 
 int smart_driver_transfer(dev_handle_t dev, void ** buffer, uint32_t * size, device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata);
 int smart_driver_extract(dev_handle_t dev, void * buffer, uint32_t size, divedata_callback_fn_t cb, void * userdata);
+/*@}*/
 
 #ifdef __cplusplus
 }

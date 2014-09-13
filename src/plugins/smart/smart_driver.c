@@ -25,30 +25,59 @@
 #include <string.h>
 #include <time.h>
 
-#include <common/arglist.h>
+#include <benthos/divecomputer/arglist.h>
+
+#include <common-smart/smart_device_base.h>
+#include <common-smart/smart_extract.h>
 
 #include "smart_driver.h"
 #include "smart_io.h"
 
+/* Smart Device Structure Magic Number */
+#define SMART_DEV_MAGIC		0x5347
+
+/* Smart Device Structure */
+struct smart_device_
+{
+	/* Must be First Member */
+	struct smart_device_base_t	base;		///< Smart Device Base
+
+	irda_t						s;			///< IrDA Socket
+
+	unsigned int				epaddr;		///< IrDA Endpoint Address
+	const char *				epname;		///< IrDA Endpoint Name
+	const char *				devname;	///< Device Name
+
+	int							lsap;		///< IrDA LSAP Identifier
+	unsigned int				csize;		///< IrDA ChunK Size
+
+};
+
+/* Smart-I Device Handle */
+typedef struct smart_device_ *		smart_device_t;
+
+/* Check Device Handle and Magic Number */
+#define CHECK_DEV(d) (d && (((struct smart_device_base_t *)(d))->magic == SMART_DEV_MAGIC))
+
 void smart_driver_discover_cb(unsigned int address, const char * name, unsigned int charset, unsigned int hints, void * userdata)
 {
 	smart_device_t dev = (smart_device_t)(userdata);
-	if (dev == NULL)
+	if (! CHECK_DEV(dev))
 		return;
 
 	if (strncmp (name, "UWATEC Galileo Sol", 18) == 0 ||
 			strncmp (name, "Uwatec Smart", 12) == 0 ||
-			strstr (name, "Uwatec") != NULL ||
-			strstr (name, "UWATEC") != NULL ||
-			strstr (name, "Aladin") != NULL ||
-			strstr (name, "ALADIN") != NULL ||
-			strstr (name, "Smart") != NULL ||
-			strstr (name, "SMART") != NULL ||
-			strstr (name, "Galileo") != NULL ||
-			strstr (name, "GALILEO") != NULL)
+			strstr (name, "Uwatec") != 0 ||
+			strstr (name, "UWATEC") != 0 ||
+			strstr (name, "Aladin") != 0 ||
+			strstr (name, "ALADIN") != 0 ||
+			strstr (name, "Smart") != 0 ||
+			strstr (name, "SMART") != 0 ||
+			strstr (name, "Galileo") != 0 ||
+			strstr (name, "GALILEO") != 0)
 	{
 		dev->epaddr = address;
-		dev->epname = name;
+		dev->epname = strdup(name);
 	}
 }
 
@@ -83,10 +112,11 @@ time_t smart_driver_epoch()
 
 int smart_driver_handshake(smart_device_t dev)
 {
-	if ((dev == NULL) || (dev->s == NULL))
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev))
 	{
 		errno = EINVAL;
-		return -1;
+		return DRIVER_ERR_INVALID;
 	}
 
 	int rc;
@@ -95,69 +125,83 @@ int smart_driver_handshake(smart_device_t dev)
 	unsigned char ans;
 
 	rc = smart_driver_cmd(dev, cmd1, 1, & ans, 1);
-	if ((rc != 0) || (ans != 0x01))
+	if (rc != 0)
+		return rc;
+
+	if (ans != 0x01)
 	{
-		dev->errcode = DRIVER_ERR_HANDSHAKE;
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_HANDSHAKE, "Handshake Phase 1 Failed", 0);
+		return DRIVER_ERR_HANDSHAKE;
 	}
 
 	rc = smart_driver_cmd(dev, cmd2, 5, & ans, 1);
-	if ((rc != 0) || (ans != 0x01))
+	if (rc != 0)
+		return rc;
+
+	if (ans != 0x01)
 	{
-		dev->errcode = DRIVER_ERR_HANDSHAKE;
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_HANDSHAKE, "Handshake Phase 2 Failed", 0);
+		return DRIVER_ERR_HANDSHAKE;
 	}
 
-	return 0;
+	return DRIVER_ERR_SUCCESS;
 }
 
 int smart_driver_create(dev_handle_t * abstract)
 {
 	smart_device_t * dev = (smart_device_t *)(abstract);
-	if (dev == NULL)
+	if (! dev)
 	{
 		errno = EINVAL;
-		return -1;
+		return DRIVER_ERR_INVALID;
 	}
 
 	smart_device_t sd = (smart_device_t)malloc(sizeof(struct smart_device_));
-	if (sd == NULL)
-		return -1;
+	if (! sd)
+		return DRIVER_ERR_INVALID;
 
-	sd->s = NULL;
-	sd->errcode = 0;
-	sd->errmsg = NULL;
+	/* Initialize the Base Structure */
+	memset(& sd->base, 0, sizeof(struct smart_device_base_t));
+
+	/* Set the Magic Number */
+	sd->base.magic = SMART_DEV_MAGIC;
+
+	/* Initialize the Smart Structure */
+	sd->s = 0;
 	sd->epaddr = 0;
-	sd->epname = NULL;
+	sd->epname = 0;
 	sd->lsap = 1;
 	sd->csize = 4;
-	sd->tcorr = 0;
 
-	*dev = sd;
-	return 0;
+	/* Return New Device */
+	* dev = sd;
+
+	return DRIVER_ERR_SUCCESS;
 }
 
 int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * args)
 {
-	smart_device_t dev = (smart_device_t)(abstract);
+	int rc;
+	arglist_t arglist;
 
-	if (dev == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
+	smart_device_t dev = (smart_device_t)(abstract);
 
 	uint32_t chunk_size = 8;
 	uint32_t lsap = 1;
 	uint32_t irda_timeout = 2000;
 
-	arglist_t arglist;
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev))
+	{
+		errno = EINVAL;
+		return DRIVER_ERR_INVALID;
+	}
+
 	int rc = arglist_parse(& arglist, args);
 	if (rc != 0)
 	{
-		dev->errcode = DRIVER_ERR_INVALID;
-		dev->errmsg = "Invalid Argument String";
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_INVALID, "Invalid Argument String", 0);
+		return DRIVER_ERR_INVALID;
 	}
 
 	rc = arglist_read_int(arglist, "timeout", & irda_timeout);
@@ -186,40 +230,36 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 	rc = irda_socket_open(& dev->s);
 	if (rc != 0)
 	{
-		dev->errcode = irda_errcode();
-		dev->errmsg = irda_errmsg();
-		return -1;
+		smart_device_set_error(dev->base, irda_errcode(), irda_errmsg(), 1);
+		return DRIVER_ERR_INTERNAL;
 	}
 
 	// Set IrDA Socket Timeout
 	rc = irda_socket_set_timeout(dev->s, irda_timeout);
 	if (rc != 0)
 	{
-		dev->errcode = irda_errcode();
-		dev->errmsg = irda_errmsg();
+		smart_device_set_error(dev->base, irda_errcode(), irda_errmsg(), 1);
 		irda_socket_close(dev->s);
-		dev->s = NULL;
-		return -1;
+		dev->s = 0;
+		return DRIVER_ERR_INTERNAL;
 	}
 
 	// Find a Uwatec Smart Device
 	int ndevs = irda_socket_discover(dev->s, & smart_driver_discover_cb, dev);
 	if (ndevs < 0)
 	{
-		dev->errcode = irda_errcode();
-		dev->errmsg = irda_errmsg();
+		smart_device_set_error(dev->base, irda_errcode(), irda_errmsg(), 1);
 		irda_socket_close(dev->s);
-		dev->s = NULL;
-		return -1;
+		dev->s = 0;
+		return DRIVER_ERR_INTERNAL;
 	}
 
 	if (ndevs == 0)
 	{
-		dev->errcode = DRIVER_ERR_NO_DEVICE;
-		dev->errmsg = "No Uwatec Smart devices found";
+		smart_device_set_error(dev->base, DRIVER_ERR_NO_DEVICE, "No Uwatec Smart devices found", 0);
 		irda_socket_close(dev->s);
-		dev->s = NULL;
-		return -1;
+		dev->s = 0;
+		return DRIVER_ERR_NO_DEVICE;
 	}
 
 	// Connect to the first Uwatec Smart Device
@@ -227,72 +267,103 @@ int smart_driver_open(dev_handle_t abstract, const char * devpath, const char * 
 	rc = irda_socket_connect_lsap(dev->s, dev->epaddr, dev->lsap, & timeout);
 	if (rc != 0)
 	{
-		dev->errcode = irda_errcode();
-		dev->errmsg = irda_errmsg();
+		smart_device_set_error(dev->base, irda_errcode(), irda_errmsg(), 1);
 		irda_socket_close(dev->s);
-		dev->s = NULL;
-		return -1;
+		dev->s = 0;
+		return DRIVER_ERR_INTERNAL;
 	}
 
 	if (timeout)
 	{
-		dev->errcode = DRIVER_ERR_TIMEOUT;
-		dev->errmsg = "Timed out connecting to Uwatec Smart device";
+		smart_device_set_error(dev->base, DRIVER_ERR_TIMEOUT, "Timed out connecting to Uwatec Smart device", 0);
 		irda_socket_close(dev->s);
-		dev->s = NULL;
-		return -1;
+		dev->s = 0;
+		return DRIVER_ERR_TIMEOUT;
 	}
 
 	// Handshake with the Uwatec Smart Device
 	rc = smart_driver_handshake(dev);
 	if (rc != 0)
-		return -1;
+	{
+		irda_socket_close(dev->s);
+		dev->s = 0;
+		return rc;
+	}
 
 	// Read Model/Serial/Ticks
-	rc = smart_read_uchar(dev, "\x10", & dev->model);
+	rc = smart_read_uchar(dev, "\x10", & dev->base.model);
 	if (rc != 0)
-		return -1;
+	{
+		irda_socket_close(dev->s);
+		dev->s = 0;
+		return rc;
+	}
 
-	rc = smart_read_ulong(dev, "\x14", & dev->serial);
+	rc = smart_read_ulong(dev, "\x14", & dev->base.serial);
 	if (rc != 0)
-		return -1;
+	{
+		irda_socket_close(dev->s);
+		dev->s = 0;
+		return rc;
+	}
 
-	rc = smart_read_ulong(dev, "\x1a", & dev->ticks);
+	rc = smart_read_ulong(dev, "\x1a", & dev->base.ticks);
 	if (rc != 0)
-		return -1;
+	{
+		irda_socket_close(dev->s);
+		dev->s = 0;
+		return rc;
+	}
 
+	/* Calculate Time Correction */
 	time_t hstime = time(NULL) * 2;
-	dev->epoch = smart_driver_epoch();
-	dev->tcorr = hstime - dev->ticks;
+	dev->base.epoch = smarti_driver_epoch();
+	dev->base.tcorr = hstime - dev->base.ticks;
 
-	// Device Opened Successfully
-	return 0;
+	/* Success */
+	return DRIVER_ERR_SUCCESS;
 }
 
 void smart_driver_close(dev_handle_t abstract)
 {
 	smart_device_t dev = (smart_device_t)(abstract);
 
-	if (dev == NULL)
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev))
 		return;
 
+	/* Close IrDA Socket */
 	if (dev->s != NULL)
 		irda_socket_close(dev->s);
 
-	free(dev);
+	/* Free Endpoint Name String */
+	if (dev->epname)
+	{
+		free(dev->epname);
+		dev->epname = 0;
+	}
 }
 
 void smart_driver_shutdown(dev_handle_t abstract)
 {
 	smart_device_t dev = (smart_device_t)(abstract);
 
-	if (dev == NULL)
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev))
 		return;
 
+	/* Shutdown IrDA Socket */
 	if (dev->s != NULL)
 		irda_socket_shutdown(dev->s);
 
 	dev->s = NULL;
+
+	/* Free Error Message */
+	if (dev->base.errdyn)
+		free((char *)dev->base.errmsg);
+
+	/* Free Handle */
+	free(dev);
 }
 
 const char * smart_driver_name(dev_handle_t abstract)
@@ -304,55 +375,73 @@ const char * smart_driver_errmsg(dev_handle_t abstract)
 {
 	smart_device_t dev = (smart_device_t)(abstract);
 
-	if (dev == NULL)
-		return NULL;
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev))
+	{
+		errno = EINVAL;
+		return 0;
+	}
 
-	return dev->errmsg;
+	/* Return Error Message */
+	return dev->base.errmsg;
 }
 
 int smart_driver_get_model(dev_handle_t abstract, uint8_t * outval)
 {
 	smart_device_t dev = (smart_device_t)(abstract);
-	if (dev == NULL)
-		return DRIVER_ERR_INVALID;
 
-	* outval = dev->model;
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev) || ! outval)
+	{
+		errno = EINVAL;
+		return DRIVER_ERR_INVALID;
+	}
+
+	* outval = dev->base.model;
+
 	return DRIVER_ERR_SUCCESS;
 }
 
 int smart_driver_get_serial(dev_handle_t abstract, uint32_t * outval)
 {
 	smart_device_t dev = (smart_device_t)(abstract);
-	if (dev == NULL)
-		return DRIVER_ERR_INVALID;
 
-	* outval = dev->serial;
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev) || ! outval)
+	{
+		errno = EINVAL;
+		return DRIVER_ERR_INVALID;
+	}
+
+	* outval = dev->base.serial;
+
 	return DRIVER_ERR_SUCCESS;
 }
 
 int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size, device_callback_fn_t dcb, transfer_callback_fn_t pcb, void * userdata)
 {
 	smart_device_t dev = (smart_device_t)(abstract);
-	if (dev == NULL)
-	{
-		errno = EINVAL;
-		return -1;
-	}
 
-	// Send the Device Callback and retrieve the Token
 	char * stoken = 0;
 	int free_token = 0;
 	uint32_t token = 0;
 	int rc;
 
-	if (dcb != NULL)
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev))
 	{
-		rc = dcb(userdata, dev->model, dev->serial, dev->ticks, & stoken, & free_token);
+		errno = EINVAL;
+		return 0;
+	}
+
+	// Send the Device Callback and retrieve the Token
+	if (dcb)
+	{
+		rc = dcb(userdata, dev->base.model, dev->base.serial, dev->base.ticks, & stoken, & free_token);
 		if (rc != DRIVER_ERR_SUCCESS)
 		{
-			dev->errcode = rc;
-			dev->errmsg = "Error in Driver Callback";
-			return -1;
+			smart_device_set_error(dev->base, rc, "Error in Device Callback", 0);
+			return rc;
 		}
 
 		if (stoken != NULL)
@@ -361,9 +450,8 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 			rc = sscanf(stoken, "%u", & token);
 			if (rc != 1)
 			{
-				dev->errcode = DRIVER_ERR_INVALID;
-				dev->errmsg = "Failed to parse Token String";
-				return -1;
+				smart_device_set_error(dev->base, rc, "Invalid Token String", 0);
+				return DRIVER_ERR_INVALID;
 			}
 
 			// Free the Token Memory
@@ -386,9 +474,8 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 	(* buffer) = malloc(* size);
 	if (* buffer == NULL)
 	{
-		dev->errcode = DRIVER_ERR_INVALID;
-		dev->errmsg = "Unable to allocate transfer data buffer";
-		return -1;
+		smart_device_set_error(dev->base, ENOMEM, "Unable to allocate transfer data buffer", 0);
+		return DRIVER_ERR_INTERNAL;
 	}
 
 	unsigned char cmd2[] = { 0xc4, 0, 0, 0, 0, 0x10, 0x27, 0, 0 };
@@ -411,9 +498,8 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 		(* buffer) = 0;
 		(* size) = 0;
 
-		dev->errcode = DRIVER_ERR_INVALID;
-		dev->errmsg = "Data Length Mismatch in smart_driver_transfer";
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_INTERNAL, "Data length mismatch", 0);
+		return DRIVER_ERR_INTERNAL;
 	}
 
 	// Start Transfer
@@ -422,9 +508,8 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 
 	if (cancel)
 	{
-		dev->errcode = DRIVER_ERR_CANCELLED;
-		dev->errmsg = "Operation was cancelled by the user";
-		return -1;
+		smart_device_set_error(dev->base, DRIVER_ERR_CANCELLED, "Operation was cancelled by the user", 0);
+		return DRIVER_ERR_CANCELLED;
 	}
 
 	pos = 0;
@@ -440,16 +525,14 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 		rc = irda_socket_read(dev->s, & ((unsigned char *)(* buffer))[pos], & nt, & timeout);
 		if (rc != 0)
 		{
-			dev->errcode = DRIVER_ERR_READ;
-			dev->errmsg = "Failed to read bytes to the Uwatec Smart device";
-			return -1;
+			smart_device_set_error(dev->base, DRIVER_ERR_READ, "Failed to read bytes from the Uwatec Smart device", 0);
+			return DRIVER_ERR_READ;
 		}
 
 		if (timeout)
 		{
-			dev->errcode = DRIVER_ERR_TIMEOUT;
-			dev->errmsg = "Timed out reading data from the Uwatec Smart device";
-			return -1;
+			smart_device_set_error(dev->base, DRIVER_ERR_TIMEOUT, "Timed out reading data from the Uwatec Smart device", 0);
+			return DRIVER_ERR_TIMEOUT;
 		}
 
 		len -= nt;
@@ -460,9 +543,8 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 
 		if (cancel)
 		{
-			dev->errcode = DRIVER_ERR_CANCELLED;
-			dev->errmsg = "Operation was cancelled by the user";
-			return -1;
+			smart_device_set_error(dev->base, DRIVER_ERR_CANCELLED, "Operation was cancelled by the user", 0);
+			return DRIVER_ERR_CANCELLED;
 		}
 	}
 
@@ -472,54 +554,44 @@ int smart_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * size
 
 int smart_driver_extract(dev_handle_t abstract, void * buffer, uint32_t size, divedata_callback_fn_t cb, void * userdata)
 {
+	int rc;
 	smart_device_t dev = (smart_device_t)(abstract);
 
-	if (dev == NULL)
+	/* Check Magic Number */
+	if (! CHECK_DEV(dev) || ! cb)
 	{
 		errno = EINVAL;
-		return -1;
+		return DRIVER_ERR_INVALID;
 	}
 
-	unsigned char * data = (unsigned char *)buffer;
-
-	char token[20];
-	uint8_t hdr[4] = { 0xa5, 0xa5, 0x5a, 0x5a };
-	uint32_t dlen = 0;
-	uint32_t tok = 0;
-	uint32_t pos = 0;
-
-	while (pos < size)
+	/* Extract Dives */
+	rc = smart_extract_dives(buffer, size, cb, userdata);
+	if (rc != EXTRACT_SUCCESS)
 	{
-		if (strncmp((char *)(& data[pos]), (char *)hdr, 4) != 0)
+		switch (rc)
 		{
-			dev->errcode = DRIVER_ERR_INVALID;
-			dev->errmsg = "Invalid or corrupt data in smart_transfer";
-			return -1;
+		case EXTRACT_INVALID:
+			errno = EINVAL;
+			return DRIVER_ERR_INVALID;
+
+		case EXTRACT_CORRUPT:
+			smart_device_set_error(dev->base, DRIVER_ERR_READ, "Invalid or Corrupt Data", 0);
+			return DRIVER_ERR_READ;
+
+		case EXTRACT_TOO_SHORT:
+			smart_device_set_error(dev->base, DRIVER_ERR_READ, "Dive extends past end of Buffer", 0);
+			return DRIVER_ERR_READ;
+
+		case EXTRACT_EXTRA_DATA:
+			smart_device_set_error(dev->base, DRIVER_ERR_READ, "Extra data at end of Buffer", 0);
+			return DRIVER_ERR_READ;
+
 		}
 
-		dlen = * (uint32_t *)(& data[pos + 4]);
-		if (pos + dlen > size)
-		{
-			dev->errcode = DRIVER_ERR_INVALID;
-			dev->errmsg = "Length of dive extends past end of received data in smart_transfer";
-			return -1;
-		}
-
-		tok = * (uint32_t *)(& data[pos + 8]);
-		sprintf(token, "%u", tok);
-
-		if (cb != NULL)
-			cb(userdata, & data[pos], dlen, token);
-
-		pos += dlen;
+		smart_device_set_error(dev->base, DRIVER_ERR_INTERNAL, "Internal Error", 0);
+		return DRIVER_ERR_INTERNAL;
 	}
 
-	if (pos != size)
-	{
-		dev->errcode = DRIVER_ERR_INVALID;
-		dev->errmsg = "Found additional bytes at end of received data in smart_transfer";
-		return -1;
-	}
-
-	return 0;
+	/* Success */
+	return DRIVER_ERR_SUCCESS;
 }
