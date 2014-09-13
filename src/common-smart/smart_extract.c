@@ -39,18 +39,18 @@ int smart_extract_dives(void * buffer, uint32_t size, divedata_callback_fn_t cb,
 
 	while (pos < size)
 	{
-		if (strncmp((char *)(& buffer[pos]), (char *)hdr, 4) != 0)
+		if (strncmp((char *)(& ((uint8_t *)buffer)[pos]), (char *)hdr, 4) != 0)
 			return EXTRACT_CORRUPT;
 
-		dlen = * (uint32_t *)(& buffer[pos + 4]);
+		dlen = * (uint32_t *)(& ((uint8_t *)buffer)[pos + 4]);
 		if (pos + dlen > size)
 			return EXTRACT_TOO_SHORT;
 
-		tok = * (uint32_t *)(& buffer[pos + 8]);
+		tok = * (uint32_t *)(& ((uint8_t *)buffer)[pos + 8]);
 		sprintf(token, "%u", tok);
 
 		if (cb)
-			cb(userdata, & buffer[pos], dlen, token);
+			cb(userdata, & ((uint8_t *)buffer)[pos], dlen, token);
 
 		pos += dlen;
 	}

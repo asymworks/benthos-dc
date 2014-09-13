@@ -718,6 +718,8 @@ static uint32_t smart_fixsignbit(uint32_t x, uint32_t n)
 int smart_process_dti(smart_parser_t parser, const unsigned char * data, uint32_t size,
 		uint32_t * offset, const dti_entry_t * dti, uint32_t * value, int32_t * svalue)
 {
+	uint8_t i;
+
 	// Skip the Processed Type Bits
 	*offset += dti->ntb / NBITS;
 
@@ -746,7 +748,7 @@ int smart_process_dti(smart_parser_t parser, const unsigned char * data, uint32_
 	}
 
 	// Process Extra Bits
-	for (uint8_t i = 0; i < dti->extra; ++i)
+	for (i = 0; i < dti->extra; ++i)
 	{
 		nbits += NBITS;
 		(*value) <<= NBITS;
@@ -971,9 +973,12 @@ int smart_parser_parse_profile(parser_handle_t abstract, const void * buffer, ui
 			// Send Alarm Data
 			if (parser->have_alarms)
 			{
-				for (uint8_t i = 0; i < 3; i++)
+				uint8_t i;
+				uint8_t j;
+
+				for (i = 0; i < 3; i++)
 				{
-					for (uint8_t j = 0; j < 9; j++)
+					for (j = 0; j < 9; j++)
 					{
 						uint16_t mask = (1 << j);
 						if (((parser->alarms[i] & mask) == mask) && cb)
