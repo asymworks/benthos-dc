@@ -109,7 +109,7 @@ endif(BUILD_SMARTID OR WITH_SMART)
 if(WITH_IRDA)
   include(CheckIncludeFiles)
   
-  set(HAS_IRDA OFF)
+  set(HAS_IRDA)
   if(BDC_OS_WIN32)
     CHECK_INCLUDE_FILES("af_irda.h"       HAS_IRDA)
   endif(BDC_OS_WIN32)
