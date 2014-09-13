@@ -63,6 +63,12 @@ set(SMARTID_SRCS
 	$<TARGET_OBJECTS:common_util>
 )
 
+# Setup SysV Init Script
+configure_file(
+    ${CMAKE_SOURCE_DIR}/dist/sysvinit-smartid.in 
+    ${CMAKE_BINARY_DIR}/sysvinit-smartid 
+    @ONLY)
+
 # Use C99
 add_definitions( -std=c99 )
 
@@ -98,3 +104,8 @@ install(
     TARGETS smartid
     DESTINATION sbin
 )
+
+# Install SysV Init File
+install(
+    FILES ${CMAKE_BINARY_DIR}/sysvinit-smartid
+    DESTINATION /etc/init.d 
