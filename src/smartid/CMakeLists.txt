@@ -51,6 +51,9 @@ execute_process(COMMAND uname -m OUTPUT_VARIABLE SMARTID_MACHINE OUTPUT_STRIP_TR
 # Default Listening Port
 set(SMARTID_DEFAULT_PORT 6740)
 
+# Default PID File
+SET(SMARTID_PIDFILE "${BENTHOS_DC_RUNSTATEDIR}/${SMARTID_APP_NAME}.pid")
+
 # C/C++ Source Files
 set(SMARTID_SRCS
     smartid_cmd.c
@@ -66,7 +69,7 @@ set(SMARTID_SRCS
 # Setup SysV Init Script
 configure_file(
     ${CMAKE_SOURCE_DIR}/dist/sysvinit-smartid.in 
-    ${CMAKE_BINARY_DIR}/sysvinit-smartid 
+    ${CMAKE_CURRENT_BINARY_DIR}/sysvinit-smartid 
     @ONLY)
 
 # Use C99
@@ -90,23 +93,24 @@ include_directories(
 )
 
 # Build the Application
-add_executable(smartid
+add_executable(${SMARTID_APP_NAME}
 	${SMARTID_SRCS}
 )
 
 # Link the Application
-target_link_libraries(smartid
+target_link_libraries(${SMARTID_APP_NAME}
     ${EVENT_CORE_LIBRARIES}
 )
 
 # Install the Application
 install(
-    TARGETS smartid
+    TARGETS ${SMARTID_APP_NAME}
     DESTINATION sbin
 )
 
 # Install SysV Init File
 install(
-    FILES ${CMAKE_BINARY_DIR}/sysvinit-smartid
-    DESTINATION /etc/init.d 
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/sysvinit-smartid
+    RENAME ${SMARTID_APP_NAME}
+    DESTINATION ${BENTHOS_DC_SYSCONFDIR}/init.d 
 )
