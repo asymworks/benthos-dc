@@ -215,7 +215,7 @@ std::string scan_plugin_path(const std::string & path, const std::string & libra
 		else
 		{
 			if (boost::regex_search(fn, e))
-				return boost::filesystem::canonical(p /= fn).string();
+				return boost::filesystem::canonical(fn).string();
 		}
 	}
 
