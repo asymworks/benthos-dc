@@ -109,3 +109,4 @@ install(
 install(
     FILES ${CMAKE_BINARY_DIR}/sysvinit-smartid
     DESTINATION /etc/init.d 
+)
