@@ -328,6 +328,9 @@ void smarti_driver_shutdown(dev_handle_t abstract)
 	/* Free Error Message */
 	if (dev->base.errdyn)
 		free((char *)dev->base.errmsg);
+
+	/* Free Handle */
+	free(dev);
 }
 
 const char * smarti_driver_name(dev_handle_t abstract)
