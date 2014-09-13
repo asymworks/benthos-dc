@@ -136,7 +136,7 @@ void smartid_cmd_process(smarti_conn_t c, const char * cmd_line, size_t cmd_len)
 {
 	size_t name_len;
 	int i;
-	struct smarti_cmd_t * cmd;
+	struct smarti_cmd_t * cmd = 0;
 	char * p;
 	char * name;
 	char * params;
@@ -182,7 +182,7 @@ void smartid_cmd_process(smarti_conn_t c, const char * cmd_line, size_t cmd_len)
 		}
 	}
 
-	if (! cmd->name)
+	if (! cmd || ! cmd->name)
 	{
 		smartid_log_warning("Received unknown command '%s' from %s", name, smartid_conn_client(c));
 		smartid_conn_send_responsef(c, SMARTI_ERROR_UNKNOWN_COMMAND, "Unknown Command '%s'", cmd);

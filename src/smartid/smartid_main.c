@@ -451,11 +451,7 @@ int main(int argc, char ** argv)
 			return 1;
 		}
 
-#ifdef BDC_64BIT
 		fprintf(fp_pid, "%u", pid);
-#else
-		fprintf(fp_pid, "%lu", pid);
-#endif
 		fflush(fp_pid);
 		fclose(fp_pid);
 

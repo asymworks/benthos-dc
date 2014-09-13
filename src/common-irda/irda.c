@@ -695,7 +695,7 @@ int irda_socket_write(irda_t s, const void * data, size_t * size, int * timeoutp
 
 	while (nbytes < (* size))
 	{
-		int n;
+		int n = 0;
 
 		BEGIN_SELECT_LOOP(s)
 		timeout = internal_select(s, 1, interval);
