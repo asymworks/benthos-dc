@@ -38,52 +38,54 @@
  */
 
 #include <cstdlib>
+
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-
-#include <list>
-#include <map>
+#include <string>
 #include <vector>
-#include <utility>
 
-#include <benthos/divecomputer/config.hpp>
-#include <benthos/divecomputer/driver.hpp>
-#include <benthos/divecomputer/driverclass.hpp>
-#include <benthos/divecomputer/plugin.hpp>
-#include <benthos/divecomputer/registry.hpp>
+#include <benthos/divecomputer/config.h>
+#include <benthos/divecomputer/manifest.h>
+#include <benthos/divecomputer/registry.h>
+
+#include <benthos/divecomputer/plugin/driver.h>
+#include <benthos/divecomputer/plugin/parser.h>
+#include <benthos/divecomputer/plugin/plugin.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 #include <boost/program_options.hpp>
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+#include "output_fmt.h"
+#include "output_uddf.h"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
-
-using namespace benthos::dc;
 
 typedef std::vector<uint8_t>					dive_buffer_t;
 typedef std::pair<dive_buffer_t, std::string>	dive_entry_t;
 typedef std::list<dive_entry_t>					dive_data_t;
 
-void listDrivers()
+void list_drivers(void)
 {
+	driver_iterator_t it;
+	const driver_info_t * di;
+
 	std::cout << "Registered Device Drivers" << std::endl;
 	std::cout << std::endl;
+	std::cout << boost::format("%-20s %-12s %-40s\n") % "Plugin" % "Driver" % "Description";
+	std::cout << "--------------------------------------------------------------------------\n";
 
-	PluginRegistry::Ptr reg = PluginRegistry::Instance();
-	std::list<plugin_manifest_t>::const_iterator it;
-	for (it = reg->plugins().begin(); it != reg->plugins().end(); it++)
+	it = benthos_dc_registry_drivers();
+	while ((di = benthos_dc_driver_iterator_info(it)) != 0)
 	{
-		std::list<driver_manifest_t>::const_iterator it2;
-		for (it2 = it->plugin_drivers.begin(); it2 != it->plugin_drivers.end(); it2++)
-			std::cout << "  " << std::setiosflags(std::ios_base::left) << std::setw(20) << it2->driver_name << it2->driver_desc << std::endl;
+		std::cout << boost::format("%-20s %-12s %-40s\n") % di->plugin->plugin_name % di->driver_name % di->driver_desc;
+		benthos_dc_driver_iterator_next(it);
 	}
 }
 
-std::string tokenFilePath(const std::string & driver, uint32_t serial, const std::string & path)
+std::string token_path(const std::string & driver, uint32_t serial, const std::string & path)
 {
 	/*
 	 * Get the file path in which the transfer token is stored.  If the path
@@ -122,38 +124,145 @@ std::string tokenFilePath(const std::string & driver, uint32_t serial, const std
 	return tokenpath.native();
 }
 
-typedef struct {
-	Driver::Ptr		dev;
-
-	bool			quiet;
-	std::string		device_path;
-	std::string		token_file;
-	std::string		token_path;
-	std::string		token;
-
-} app_data;
-
-int device_info(void * userdata, uint8_t model, uint32_t serial, uint32_t ticks, char ** token_, int * free_token)
+int register_paths(const po::variables_map & vm)
 {
-	app_data * a = (app_data *)(userdata);
+	int rv;
+
+	if (vm.count("manifest-file"))
+	{
+		std::vector<std::string> files(vm["manifest-file"].as<std::vector<std::string> >());
+		std::vector<std::string>::const_iterator it;
+
+		for (it = files.begin(); it != files.end(); it++)
+		{
+			rv = benthos_dc_registry_add_manifest(it->c_str());
+			if (rv != 0)
+			{
+				std::cerr << "Failed to add manifest '" << * it << "': " << benthos_dc_registry_strerror(rv) << std::endl;
+				return rv;
+			}
+		}
+	}
+
+	if (vm.count("manifest-path"))
+	{
+		std::vector<std::string> files(vm["manifest-path"].as<std::vector<std::string> >());
+		std::vector<std::string>::const_iterator it;
+
+		for (it = files.begin(); it != files.end(); it++)
+		{
+			rv = benthos_dc_registry_add_manifest_path(it->c_str());
+			if (rv != 0)
+			{
+				std::cerr << "Failed to add manifest path '" << * it << "': " << benthos_dc_registry_strerror(rv) << std::endl;
+				return rv;
+			}
+		}
+	}
+
+	if (vm.count("plugin-file"))
+	{
+		std::vector<std::string> files(vm["plugin-file"].as<std::vector<std::string> >());
+		std::vector<std::string>::const_iterator it;
+
+		for (it = files.begin(); it != files.end(); it++)
+		{
+			rv = benthos_dc_registry_add_plugin(it->c_str());
+			if (rv != 0)
+			{
+				std::cerr << "Failed to add plugin '" << * it << "': " << benthos_dc_registry_strerror(rv) << std::endl;
+				return rv;
+			}
+		}
+	}
+
+	if (vm.count("plugin-path"))
+	{
+		std::vector<std::string> files(vm["plugin-path"].as<std::vector<std::string> >());
+		std::vector<std::string>::const_iterator it;
+
+		for (it = files.begin(); it != files.end(); it++)
+		{
+			rv = benthos_dc_registry_add_plugin_path(it->c_str());
+			if (rv != 0)
+			{
+				std::cerr << "Failed to add plugin path '" << * it << "': " << benthos_dc_registry_strerror(rv) << std::endl;
+				return rv;
+			}
+		}
+	}
+
+	return 0;
+}
+
+typedef struct {
+	const driver_info_t *		di;
+
+	const driver_interface_t *	drv;
+	dev_handle_t				dev;
+
+	bool						quiet;
+
+	std::string					device_path;
+	std::string					token_file;
+	std::string					token_path;
+	std::string					token;
+
+	uint8_t						model;
+	uint32_t					serial;
+	uint32_t					ticks;
+
+} devcb_data;
+
+const char * model_mfg(const driver_info_t * di, uint8_t model)
+{
+	int i;
+
+	for (i = 0; i < di->n_models; ++i)
+		if (di->models[i]->model_number == model)
+			return di->models[i]->manuf_name;
+
+	return "";
+}
+
+const char * model_name(const driver_info_t * di, uint8_t model)
+{
+	int i;
+
+	for (i = 0; i < di->n_models; ++i)
+		if (di->models[i]->model_number == model)
+			return di->models[i]->model_name;
+
+	return "";
+}
+
+int device_cb(void * userdata, uint8_t model, uint32_t serial, uint32_t ticks, char ** token_, int * free_token)
+{
+	devcb_data * a = (devcb_data *)(userdata);
 	if (a == NULL)
 		return -1;
 
+	/* Store Device Information */
+	a->model = model;
+	a->serial = serial;
+	a->ticks = ticks;
+
 	if (! a->quiet)
 	{
-		std::string mfg = a->dev->manufacturer(model);
+		std::string mfg(model_mfg(a->di, model));
+		std::string mname(model_name(a->di, model));
 		std::cout << "Opened ";
 		if (! mfg.empty())
 			std::cout << mfg << " ";
-		std::cout << a->dev->model_name(model) << " (sn: " << serial << ")";
+		std::cout << mname << " (sn: " << serial << ")";
 		if (! a->device_path.empty())
-			std::cout << " on " << a->device_path;
+			std::cout << " at " << a->device_path;
 		std::cout << std::endl;
 	}
 
-	// Load the Transfer Token
+	/* Load the Transfer Token */
 	std::string token;
-	a->token_file = tokenFilePath(a->dev->name(), serial, a->token_path);
+	a->token_file = token_path(a->di->driver_name, serial, a->token_path);
 	if (! a->token.empty())
 	{
 		if (a->token != "-")
@@ -178,7 +287,7 @@ int device_info(void * userdata, uint8_t model, uint32_t serial, uint32_t ticks,
 			std::cout << "Loaded token " << token << " from " << a->token_file << std::endl;
 	}
 
-	// Set the Transfer Token
+	/* Set the Transfer Token */
 	if (! token.empty())
 	{
 		(* token_) = strdup(token.c_str());
@@ -215,8 +324,12 @@ void draw_progress_bar(double pct)
 	std::flush(std::cout);
 }
 
-void progress_bar(void * userdata, uint32_t transferred, uint32_t total, int *)
+void transfer_cb(void * userdata, uint32_t transferred, uint32_t total, int *)
 {
+	devcb_data * a = (devcb_data *)(userdata);
+	if (a == NULL)
+		return;
+
 	static int filled = 0;
 	double pct = transferred / (double)total;
 
@@ -244,418 +357,343 @@ void progress_bar(void * userdata, uint32_t transferred, uint32_t total, int *)
 	filled = next_filled;
 }
 
-typedef std::pair<uint16_t, uint16_t>	mix_t;
-typedef std::map<std::string, mix_t>	mix_list_t;
-
-typedef struct
+void extract_cb(void * userdata, void * buffer_ptr, uint32_t buffer_len, const char * token)
 {
-	xmlDoc *						doc;			///< XML Document
-	xmlNode *						root;			///< XML Root Node
-	xmlNode *						profiles;		///< UDDF Profiles Node
-	xmlNode *						repgrp;			///< UDDF Repetition Group Node
-	bool							hdr_only;		///< Parse Header Only
-
-	mix_list_t						mixes;			///< List of Gas Mixes
-	std::map<uint8_t, xmlNode *>	tanks;			///< List of Tank Nodes
-
-	xmlNode *						cur_profile;	///< Current Profile Node
-	xmlNode *						cur_waypoint;	///< Current Waypoint Node
-	xmlNode *						appdata;		///< Application Data Node
-	xmlNode *						samples;		///< Samples Node
-
-	xmlNode *						before;			///< Information Before Dive Node
-	xmlNode *						after;			///< Information After Dive Node
-
-	std::string						ts;				///< Date/Time Stamp
-	int								rgid;			///< Repetition Group Id
-	int								did;			///< Dive Id
-
-} parser_data;
-
-void parse_header(void * userdata, uint8_t token, int32_t value, uint8_t index, const char * name)
-{
-	time_t st;
-	char buf[255];
-
-	parser_data * _data = (parser_data *)userdata;
-
-	if (_data->cur_profile == 0)
-	{
-		sprintf(buf, "benthos_dive_%s_%03d", _data->ts.c_str(), _data->did++);
-		_data->cur_profile = xmlNewNode(NULL, BAD_CAST "dive");
-		xmlNewProp(_data->cur_profile, BAD_CAST "id", BAD_CAST buf);
-
-		xmlNode * appdata = xmlNewChild(_data->cur_profile, NULL, BAD_CAST "applicationdata", NULL);
-		_data->appdata = xmlNewChild(appdata, NULL, BAD_CAST "benthos", NULL);
-
-		_data->before = xmlNewChild(_data->cur_profile, NULL, BAD_CAST "informationbeforedive", NULL);
-		_data->after = xmlNewChild(_data->cur_profile, NULL, BAD_CAST "informationafterdive", NULL);
-
-		_data->samples = xmlNewChild(_data->cur_profile, NULL, BAD_CAST "samples", NULL);
-	}
-
-	switch (token)
-	{
-	case DIVE_HEADER_START_TIME:
-	{
-		st = (time_t)value;
-		struct tm * tmp;
-		tmp = gmtime(& st);
-		strftime(buf, 255, "%Y-%m-%dT%H:%M:%S", tmp);
-		xmlNewChild(_data->cur_profile, NULL, BAD_CAST "datetime", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_UTC_OFFSET:
-	{
-		sprintf(buf, "%d", value);
-		xmlNewChild(_data->appdata, NULL, BAD_CAST "utc_offset", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_DURATION:
-	{
-		sprintf(buf, "%u", value * 60);
-		xmlNewChild(_data->after, NULL, BAD_CAST "diveduration", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_INTERVAL:
-	{
-		xmlNode * si = xmlNewChild(_data->before, NULL, BAD_CAST "surfaceintervalbeforedive", NULL);
-		if (value == 0)
-		{
-			xmlNewChild(si, NULL, BAD_CAST "infinity", NULL);
-		}
-		else
-		{
-			sprintf(buf, "%d", value * 60);
-			xmlNewChild(si, NULL, BAD_CAST "passedtime", BAD_CAST buf);
-		}
-		break;
-	}
-
-	case DIVE_HEADER_REPETITION:
-	{
-		if (value == 1)
-		{
-			sprintf(buf, "benthos_repgroup_%s_%03d", _data->ts.c_str(), _data->rgid++);
-			_data->repgrp = xmlNewChild(_data->profiles, NULL, BAD_CAST "repetitiongroup", NULL);
-			xmlNewProp(_data->repgrp, BAD_CAST "id", BAD_CAST buf);
-		}
-		break;
-	}
-
-	case DIVE_HEADER_DESAT_BEFORE:
-	{
-		sprintf(buf, "%u", value * 60);
-		xmlNewChild(_data->before, NULL, BAD_CAST "desaturationtime", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_DESAT_AFTER:
-	{
-		sprintf(buf, "%u", value * 60);
-		xmlNewChild(_data->after, NULL, BAD_CAST "desaturationtime", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_NOFLY_BEFORE:
-	{
-		sprintf(buf, "%u", value * 60);
-		xmlNewChild(_data->before, NULL, BAD_CAST "noflighttime", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_NOFLY_AFTER:
-	{
-		sprintf(buf, "%u", value * 60);
-		xmlNewChild(_data->after, NULL, BAD_CAST "noflighttime", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_MAX_DEPTH:
-	{
-		sprintf(buf, "%.2f", value / 100.0);
-		xmlNewChild(_data->after, NULL, BAD_CAST "greatestdepth", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_AVG_DEPTH:
-	{
-		sprintf(buf, "%.2f", value / 100.0);
-		xmlNewChild(_data->appdata, NULL, BAD_CAST "avg_depth", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_AIR_TEMP:
-	{
-		sprintf(buf, "%.2f", value / 100.0 + 273.15);
-		xmlNewChild(_data->before, NULL, BAD_CAST "airtemperature", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_MAX_TEMP:
-	{
-		sprintf(buf, "%.2f", value / 100.0);
-		xmlNewChild(_data->appdata, NULL, BAD_CAST "max_temp", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_MIN_TEMP:
-	{
-		sprintf(buf, "%.2f", value / 100.0 + 273.15);
-		xmlNewChild(_data->after, NULL, BAD_CAST "lowesttemperature", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_PX_START:
-	{
-		if (_data->tanks.find(index) == _data->tanks.end())
-			_data->tanks.insert(std::pair<uint8_t, xmlNode *>(index, xmlNewChild(_data->cur_profile, NULL, BAD_CAST "tankdata", NULL)));
-
-		sprintf(buf, "%u", value);
-		xmlNewChild(_data->tanks[index], NULL, BAD_CAST "tankpressurebegin", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_PX_END:
-	{
-		if (_data->tanks.find(index) == _data->tanks.end())
-			_data->tanks.insert(std::pair<uint8_t, xmlNode *>(index, xmlNewChild(_data->cur_profile, NULL, BAD_CAST "tankdata", NULL)));
-
-		sprintf(buf, "%u", value);
-		xmlNewChild(_data->tanks[index], NULL, BAD_CAST "tankpressureend", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_HEADER_PMO2:
-	{
-		if (! value)
-			break;
-
-		if (_data->tanks.find(index) == _data->tanks.end())
-			_data->tanks.insert(std::pair<uint8_t, xmlNode *>(index, xmlNewChild(_data->cur_profile, NULL, BAD_CAST "tankdata", NULL)));
-
-		sprintf(buf, "mix-%d", index);
-		std::string mix(buf);
-		mix_list_t::iterator it = _data->mixes.find(mix);
-		if (it == _data->mixes.end())
-		{
-			_data->mixes.insert(std::pair<std::string, mix_t>(mix, mix_t(value, 0)));
-		}
-		else
-		{
-			it->second.first = value;
-		}
-		break;
-	}
-
-	case DIVE_HEADER_PMHe:
-	{
-		if (! value)
-			break;
-
-		if (_data->tanks.find(index) == _data->tanks.end())
-			_data->tanks.insert(std::pair<uint8_t, xmlNode *>(index, xmlNewChild(_data->cur_profile, NULL, BAD_CAST "tankdata", NULL)));
-
-		sprintf(buf, "mix-%d", index);
-		std::string mix(buf);
-		mix_list_t::iterator it = _data->mixes.find(mix);
-		if (it == _data->mixes.end())
-		{
-			_data->mixes.insert(std::pair<std::string, mix_t>(mix, mix_t(0, value)));
-		}
-		else
-		{
-			it->second.second = value;
-		}
-		break;
-	}
-
-	case DIVE_HEADER_VENDOR:
-	{
-		char n[255];
-		sprintf(n, "%s%u", name, index);
-		sprintf(buf, "%u", value);
-		xmlNewChild(_data->appdata, NULL, BAD_CAST n, BAD_CAST buf);
-		break;
-	}
-	}
-}
-
-void parse_profile(void * userdata, uint8_t token, int32_t value, uint8_t index, const char * name)
-{
-	char buf[255];
-	parser_data * _data = (parser_data *)userdata;
-
-	if (_data->hdr_only)
+	dive_data_t * data = (dive_data_t *)(userdata);
+	if (! data)
 		return;
 
-	switch (token)
-	{
-	case DIVE_WAYPOINT_TIME:
-	{
-		sprintf(buf, "%d", value);
-		_data->cur_waypoint = xmlNewChild(_data->samples, NULL, BAD_CAST "waypoint", NULL);
-		xmlNewChild(_data->cur_waypoint, NULL, BAD_CAST "divetime", BAD_CAST buf);
-		break;
-	}
+	dive_buffer_t buffer((uint8_t *)buffer_ptr, (uint8_t *)buffer_ptr + buffer_len);
+	dive_entry_t entry(buffer, std::string(token));
 
-	case DIVE_WAYPOINT_DEPTH:
-	{
-		sprintf(buf, "%.2f", value / 100.0);
-		xmlNewChild(_data->cur_waypoint, NULL, BAD_CAST "depth", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_WAYPOINT_TEMP:
-	{
-		sprintf(buf, "%.2f", value / 100.0 + 273.15);
-		xmlNewChild(_data->cur_waypoint, NULL, BAD_CAST "temperature", BAD_CAST buf);
-		break;
-	}
-
-	case DIVE_WAYPOINT_ALARM:
-	{
-		xmlNewChild(_data->cur_waypoint, NULL, BAD_CAST "alarm", BAD_CAST name);
-		break;
-	}
-	}
+	data->push_back(entry);
 }
 
-void parseDives(Driver::Ptr driver, const dive_data_t & dives, std::string outfile, std::string & token, bool hdr_only)
+int run_parser(const po::variables_map & vm, const driver_interface_t * drv, dev_handle_t dev,
+		const driver_info_t * di, devcb_data * dev_data, const char * drv_args,
+		const char * dev_path, const dive_data_t & dive_data)
 {
-	parser_data _data;
-
-	// Initialize the XML File
-	_data.doc = xmlNewDoc(BAD_CAST "1.0");
-	_data.root = xmlNewNode(NULL, BAD_CAST "uddf");
-	xmlDocSetRootElement(_data.doc, _data.root);
-
-	// Set the UDDF Data Version
-	xmlNewProp(_data.root, BAD_CAST "version", BAD_CAST "3.0.0");
-
-	// Set Generator Data
-	xmlNode * generator = xmlNewChild(_data.root, NULL, BAD_CAST "generator", NULL);
-	xmlNewChild(generator, NULL, BAD_CAST "name", BAD_CAST "benthos-dc");
-	xmlNewChild(generator, NULL, BAD_CAST "version", BAD_CAST BENTHOS_DC_VERSION_STRING);
-
-	char buf[255];
-	time_t t = time(NULL);
-	struct tm * tm;
-	tm = localtime(& t);
-	strftime(buf, 250, "%Y-%m-%d", tm);
-	xmlNewChild(generator, NULL, BAD_CAST "datetime", BAD_CAST buf);
-
-	strftime(buf, 250, "%Y%m%dT%H%m%S", tm);
-	_data.ts = std::string(buf);
-
-	// Setup Gas Definitions Node
-	xmlNode * gasdef = xmlNewChild(_data.root, NULL, BAD_CAST "gasdefinitions", NULL);
-	xmlNode * profiles = xmlNewChild(_data.root, NULL, BAD_CAST "profiledata", NULL);
-
-	// Initialize the Parser Data
-	mix_list_t mixes;
-	mixes.insert(std::pair<std::string, mix_t>("air", mix_t(210, 0)));
-	mixes.insert(std::pair<std::string, mix_t>("ean32", mix_t(320, 0)));
-	mixes.insert(std::pair<std::string, mix_t>("ean36", mix_t(360, 0)));
-
-	_data.hdr_only = hdr_only;
-	_data.profiles = profiles;
-	_data.repgrp = 0;
-	_data.rgid = 0;
-	_data.did = 0;
-
-	// Parse the Dives
+	int rv;
+	struct output_fmt_data_t_ * fmt_data;
+	std::string outfile;
+	std::string format("uddf");
+	parser_handle_t parser;
 	dive_data_t::const_iterator it;
-	for (it = dives.begin(); it != dives.end(); it++)
+
+	/* Allocate the Formatting Data */
+	fmt_data = (struct output_fmt_data_t_ *)malloc(sizeof(struct output_fmt_data_t_));
+	if (! fmt_data)
+		return ENOMEM;
+
+	/* Initialize the Formatter Data */
+	fmt_data->magic = 0;
+	fmt_data->fmt_data = 0;
+
+	fmt_data->driver_name = di->driver_name;
+	fmt_data->driver_args = drv_args;
+	fmt_data->device_path = dev_path;
+	fmt_data->driver_info = di;
+
+	fmt_data->dev_model = dev_data->model;
+	fmt_data->dev_serial = dev_data->serial;
+
+	if (vm.count("output-file"))
+		outfile = vm["output-file"].as<std::string>();
+
+	fmt_data->output_file = outfile.c_str();
+	fmt_data->output_header = 1;
+	fmt_data->output_profile = 1 - vm.count("header-only");
+
+	fmt_data->quiet = vm.count("quiet");
+
+	fmt_data->header_cb = 0;
+	fmt_data->profile_cb = 0;
+	fmt_data->dispose_fn = 0;
+	fmt_data->close_fn = 0;
+	fmt_data->prolog_fn = 0;
+	fmt_data->epilog_fn = 0;
+
+	/* Initialize the Output Formatter */
+	if (vm.count("output-format"))
+		format = vm["output-format"].as<std::string>();
+
+	if (format == "uddf")
 	{
-		_data.cur_profile = 0;
-		_data.cur_waypoint = 0;
-
-		_data.mixes.clear();
-		_data.tanks.clear();
-
-		driver->parse(it->first, & parse_header, & parse_profile, & _data);
-		xmlAddChild(_data.repgrp, _data.cur_profile);
-
-		// Process Tank Mixes
-		std::map<uint8_t, xmlNode *>::iterator idx;
-		for (idx = _data.tanks.begin(); idx != _data.tanks.end(); idx++)
+		rv = uddf_init_formatter(fmt_data);
+		if (rv != 0)
 		{
-			char buf[255];
-			sprintf(buf, "mix-%u", idx->first);
-			mix_list_t::iterator dive_mix = _data.mixes.find(buf);
-			if (dive_mix == _data.mixes.end())
+			std::cerr << "Failed to initialize UDDF Formatter: " << strerror(rv) << std::endl;
+			free(fmt_data);
+			return rv;
+		}
+	}
+	else
+	{
+		std::cerr << "Unknown output format '" + format + "'" << std::endl;
+		free(fmt_data);
+		return EINVAL;
+	}
+
+	/* Create the Parser */
+	rv = drv->parser_create(& parser, dev);
+	if (rv != 0)
+	{
+		std::cerr << "Failed to create parser: '" + std::string(drv->driver_errmsg(dev)) << "'" << std::endl;
+		fmt_data->dispose_fn(fmt_data);
+		free(fmt_data);
+		return rv;
+	}
+
+	/* Parse Dives */
+	for (it = dive_data.begin(); it != dive_data.end(); it++)
+	{
+		if (fmt_data->prolog_fn)
+		{
+			rv = fmt_data->prolog_fn(fmt_data);
+			if (rv != 0)
 			{
-				// Assume Air
-				xmlNode * mn = xmlNewChild(idx->second, NULL, BAD_CAST "link", NULL);
-				xmlNewProp(mn, BAD_CAST "ref", BAD_CAST "air");
+				std::cerr << "Failed to run output formatter prolog: " << strerror(rv) << std::endl;
+				fmt_data->dispose_fn(fmt_data);
+				free(fmt_data);
+				return rv;
 			}
-			else
+		}
+
+		rv = drv->parser_reset(parser);
+		if (rv != 0)
+		{
+			std::cerr << "Failed to reset parser: '" + std::string(drv->driver_errmsg(dev)) << "'" << std::endl;
+			fmt_data->dispose_fn(fmt_data);
+			free(fmt_data);
+			return rv;
+		}
+
+		rv = drv->parser_parse_header(parser, it->first.data(), it->first.size(), fmt_data->header_cb, fmt_data);
+		if (rv != 0)
+		{
+			std::cerr << "Failed to parse header: '" + std::string(drv->driver_errmsg(dev)) << "'" << std::endl;
+			fmt_data->dispose_fn(fmt_data);
+			free(fmt_data);
+			return rv;
+		}
+
+		rv = drv->parser_parse_profile(parser, it->first.data(), it->first.size(), fmt_data->profile_cb, fmt_data);
+		if (rv != 0)
+		{
+			std::cerr << "Failed to parse profile: '" + std::string(drv->driver_errmsg(dev)) << "'" << std::endl;
+			fmt_data->dispose_fn(fmt_data);
+			free(fmt_data);
+			return rv;
+		}
+
+		if (fmt_data->epilog_fn)
+		{
+			rv = fmt_data->epilog_fn(fmt_data);
+			if (rv != 0)
 			{
-				uint16_t o2 = dive_mix->second.first;
-				uint16_t he = dive_mix->second.second;
-
-				// See if the mix already exists
-				mix_list_t::iterator curmix;
-				for (curmix = mixes.begin(); curmix != mixes.end(); curmix++)
-					if ((curmix->second.first == o2) && (curmix->second.second == he))
-						break;
-
-				if (curmix == mixes.end())
-				{
-					// Add a new mix
-					sprintf(buf, "mix-%lu", mixes.size());
-					mixes.insert(std::pair<std::string, mix_t>(buf, mix_t(o2, he)));
-					xmlNode * mn = xmlNewChild(idx->second, NULL, BAD_CAST "link", NULL);
-					xmlNewProp(mn, BAD_CAST "ref", BAD_CAST buf);
-				}
-				else
-				{
-					// Link to the existing mix
-					xmlNode * mn = xmlNewChild(idx->second, NULL, BAD_CAST "link", NULL);
-					xmlNewProp(mn, BAD_CAST "ref", BAD_CAST curmix->first.c_str());
-				}
+				std::cerr << "Failed to run output formatter epilog: " << strerror(rv) << std::endl;
+				fmt_data->dispose_fn(fmt_data);
+				free(fmt_data);
+				return rv;
 			}
 		}
 	}
 
-	// Save the Gas Definitions
-	mix_list_t::const_iterator it2;
-	for (it2 = mixes.begin(); it2 != mixes.end(); it2++)
+	/* Close Parser */
+	drv->parser_close(parser);
+
+	/* Close and Dispose of Formatter Data */
+	fmt_data->close_fn(fmt_data);
+	fmt_data->dispose_fn(fmt_data);
+	free(fmt_data);
+
+	return 0;
+}
+
+int run_transfer(const po::variables_map & vm)
+{
+	int rv;
+	int quiet;
+	const driver_interface_t * drv;
+	const driver_info_t * di;
+	dev_handle_t dev;
+	std::string drv_name;
+	std::string drv_path;
+	std::string drv_args;
+	devcb_data cb_data;
+
+	void * buffer_ptr;
+	uint32_t buffer_len;
+	dive_data_t dive_data;
+
+	fs::path tokenpath;
+	fs::path tokendir;
+	std::string token;
+
+	// Set Quiet Mode
+	quiet = vm.count("quiet");
+
+	// Driver must be specified for Transfer Operations
+	if (! vm.count("driver"))
 	{
-		xmlNode * mixnode = xmlNewChild(gasdef, NULL, BAD_CAST "mix", NULL);
-		xmlNewProp(mixnode, BAD_CAST "id", BAD_CAST it2->first.c_str());
-		uint16_t o2 = it2->second.first;
-		uint16_t he = it2->second.second;
-		uint16_t n2 = 1000 - (o2 + he);
-
-		char _o2[10];	sprintf(_o2, "0.%03u", o2);
-		char _he[10];	sprintf(_he, "0.%03u", he);
-		char _n2[10];	sprintf(_n2, "0.%03u", n2);
-
-		xmlNewChild(mixnode, NULL, BAD_CAST "o2", BAD_CAST _o2);
-		xmlNewChild(mixnode, NULL, BAD_CAST "n2", BAD_CAST _n2);
-		xmlNewChild(mixnode, NULL, BAD_CAST "he", BAD_CAST _he);
-		xmlNewChild(mixnode, NULL, BAD_CAST "ar", BAD_CAST ("0.000"));
-		xmlNewChild(mixnode, NULL, BAD_CAST "h2", BAD_CAST ("0.000"));
+		std::cerr << "No device driver specified" << std::endl;
+		return 1;
 	}
 
-	// Save the XML File
-	xmlSaveFormatFileEnc(outfile.empty() ? "-" : outfile.c_str(), _data.doc, "UTF-8", 1);
+	drv_name = vm["driver"].as<std::string>();
 
-	// Release Resources
-	xmlFreeDoc(_data.doc);
-	xmlCleanupParser();
+	// Load the Driver Information
+	rv = benthos_dc_registry_driver_info(drv_name.c_str(), & di);
+	if (rv != 0)
+	{
+		std::cerr << "Failed to load driver '" << drv_name << "': " << benthos_dc_registry_strerror(rv) << std::endl;
+		return 1;
+	}
 
-	// Return Token
-	token = dives.back().second;
+	// Check the Device Path
+	if ((di->driver_intf != diIrDA) && (! vm.count("device")))
+	{
+		std::cerr << "No device specified" << std::endl;
+		return 1;
+	}
+
+	// Load the Driver Interface
+	rv = benthos_dc_registry_load(drv_name.c_str(), & drv);
+	if (rv != 0)
+	{
+		std::cerr << "Failed to load driver '" << drv_name << "': " << benthos_dc_registry_strerror(rv) << std::endl;
+		return 1;
+	}
+
+	// Driver Loaded
+	if (! quiet)
+		std::cout << "Loaded driver '" << di->driver_name << "' from plugin '" << di->plugin->plugin_name << "'" << std::endl;
+
+	// Open a Device Handle
+	rv = drv->driver_create(& dev);
+	if (rv != DRIVER_ERR_SUCCESS)
+	{
+		std::cerr << "Failed to open '" << di->driver_name << "' device: " << strerror(errno) << std::endl;
+		return 1;
+	}
+
+	// Open the Device
+	if (vm.count("device"))
+		drv_path = vm["device"].as<std::string>();
+	if (vm.count("dargs"))
+		drv_args = vm["dargs"].as<std::string>();
+
+	rv = drv->driver_open(dev, drv_path.c_str(), drv_args.c_str());
+	if (rv != DRIVER_ERR_SUCCESS)
+	{
+		std::cerr << "Failed to open device at '" << drv_path << "': " << drv->driver_errmsg(dev) << std::endl;
+		drv->driver_shutdown(dev);
+		return 1;
+	}
+
+	// Load Device Callback Data
+	cb_data.di = di;
+	cb_data.drv = drv;
+	cb_data.dev = dev;
+
+	cb_data.device_path = drv_path;
+
+	cb_data.token = "";
+	cb_data.token_file = "";
+	cb_data.token_path = "";
+
+	if (vm.count("token-path"))
+		cb_data.token_path = vm["token-path"].as<std::string>();
+
+	if (vm.count("token"))
+		cb_data.token = vm["token"].as<std::string>();
+
+	// Run Transfer
+	rv = drv->driver_transfer(dev, & buffer_ptr, & buffer_len, device_cb, transfer_cb, & cb_data);
+	if (rv != DRIVER_ERR_SUCCESS)
+	{
+		std::cerr << "Failed to transfer data from device at '" << drv_path << "': " << drv->driver_errmsg(dev) << std::endl;
+		drv->driver_close(dev);
+		drv->driver_shutdown(dev);
+		return 1;
+	}
+
+	// Extract Dives
+	if (buffer_len > 0)
+	{
+		rv = drv->driver_extract(dev, buffer_ptr, buffer_len, extract_cb, & dive_data);
+		if (rv != DRIVER_ERR_SUCCESS)
+		{
+			std::cerr << "Failed to extract dive data from transfer: " << drv->driver_errmsg(dev) << std::endl;
+			drv->driver_close(dev);
+			drv->driver_shutdown(dev);
+			return 1;
+		}
+
+		// Free Data Buffer
+		free(buffer_ptr);
+	}
+
+	// Dives Transferred
+	if (dive_data.size() > 0)
+	{
+		if (! quiet)
+			std::cout << "Transferred " << dive_data.size() << " new dives" << std::endl;
+
+		// Parse Dives
+		rv = run_parser(vm, drv, dev, di, & cb_data, drv_args.c_str(), drv_path.c_str(), dive_data);
+		if (rv != 0)
+		{
+			drv->driver_close(dev);
+			drv->driver_shutdown(dev);
+			return 1;
+		}
+	}
+	else
+		std::cout << "No new data to transfer" << std::endl;
+
+	// Write Transfer Token
+	tokenpath = cb_data.token_file;
+	tokendir = tokenpath.parent_path();
+
+	if (! vm.count("no-store-token"))
+	{
+		try
+		{
+			if (! fs::exists(tokendir))
+				fs::create_directories(tokendir);
+
+			if (dive_data.size() > 0)
+			{
+				token = dive_data.rbegin()->second;
+
+				std::ofstream f(tokenpath.native());
+				f << token << std::endl;
+				f.close();
+
+				if (! quiet)
+					std::cout << "Stored token " << token << " to " << cb_data.token_file << std::endl;
+			}
+		}
+		catch (std::exception & e)
+		{
+			std::cerr << "Failed to save transfer token to " << tokenpath.native() << std::cerr;
+			std::cerr << e.what() << std::endl;
+		}
+	}
+
+	// Close Device
+	drv->driver_close(dev);
+	drv->driver_shutdown(dev);
+
+	// Transfer Done
+	return 0;
 }
 
 int main(int argc, char ** argv)
 {
+	int rv;
+
 	// Setup Program Options
 	po::options_description generic("Generic Options");
 	generic.add_options()
@@ -670,15 +708,28 @@ int main(int argc, char ** argv)
 		("driver,d", po::value<std::string>(), "Driver name")
 		("dargs", po::value<std::string>(), "Driver arguments")
 		("device", po::value<std::string>(), "Device name")
-		("header-only,h", "Save header only, not profile data")
-		("output-file,o", po::value<std::string>(), "Output file")
 		("token,t", po::value<std::string>(), "Transfer token")
 		("token-path", po::value<std::string>(), "Transfer token storage path")
 		("no-store-token,U", "Don't update the stored Transfer Token")
 	;
 
+	po::options_description output("Output Options");
+	output.add_options()
+		("header-only,h", "Save header only, not profile data")
+		("output-file,o", po::value<std::string>(), "Output file")
+		("output-format,f", po::value<std::string>(), "Output format")
+	;
+
+	po::options_description registry("Registry Options");
+	registry.add_options()
+		("manifest-file", po::value<std::vector<std::string> >(), "Extra Manifest File")
+		("manifest-path,m", po::value<std::vector<std::string> >(), "Extra Manifest Path")
+		("plugin-file", po::value<std::vector<std::string> >(), "Extra Plugin File")
+		("plugin-path,p", po::value<std::vector<std::string> >(), "Extra Plugin Path")
+	;
+
 	po::options_description desc;
-	desc.add(generic).add(transfer);
+	desc.add(generic).add(transfer).add(output).add(registry);
 
 	po::positional_options_description p;
 	p.add("device", 1);
@@ -705,152 +756,35 @@ int main(int argc, char ** argv)
 		return 0;
 	}
 
+	// Initialize the Driver Registry
+	rv = benthos_dc_registry_init();
+	if (rv != 0)
+	{
+		std::cerr << "Failed to initialize plugin registry: " << benthos_dc_registry_strerror(rv) << std::endl;
+		return 1;
+	}
+
+	// Add Manifest and Plugin Paths and Files
+	if (register_paths(vm) != 0)
+	{
+		benthos_dc_registry_cleanup();
+		return 1;
+	}
+
 	// Show the Driver List
 	if (vm.count("list"))
 	{
-		listDrivers();
+		list_drivers();
+		benthos_dc_registry_cleanup();
 		return 0;
 	}
 
-	// Driver must be specified for Transfer Operations
-	if (! vm.count("driver"))
-	{
-		std::cerr << "No device driver specified" << std::endl;
-		return 1;
-	}
-
-	bool honly = (vm.count("header-only") > 0);
-	bool quiet = (vm.count("quiet") > 0);
-	std::string driver_name(vm["driver"].as<std::string>());
-
-	// Try and load the Driver Manifest
-	PluginRegistry::Ptr reg = PluginRegistry::Instance();
-	const driver_manifest_t * dm = reg->findDriver(driver_name);
-	if (dm == NULL)
-	{
-		std::cerr << "Driver " << driver_name << " is not registered" << std::endl;
-	}
-
-	if (! quiet)
-		std::cout << "Loaded driver " << driver_name << " from plugin " << dm->plugin_name << std::endl;
-
-	if ((dm->driver_intf != "irda") && ! vm.count("device"))
-	{
-		// IrDA Drivers are allowed to skip the driver argument
-		std::cerr << "Driver " << driver_name << " requires a device to be specified" << std::endl;
-		return 1;
-	}
-
-	// Load the plugin
-	Plugin::Ptr plugin;
-	try
-	{
-		plugin = reg->loadPlugin(dm->plugin_name);
-	}
-	catch (std::exception & e)
-	{
-		std::cerr << e.what() << std::endl;
-		return 1;
-	}
-
-	if (! quiet)
-		std::cout << "Loaded plugin " << dm->plugin_name << " from library " << plugin->path() << std::endl;
-
-	// Connect to the Device
-	std::string device_path;
-	if (vm.count("device"))
-		device_path = vm["device"].as<std::string>();
-
-	std::string driver_args;
-	if (vm.count("dargs"))
-		driver_args = vm["dargs"].as<std::string>();
-
-	DriverClass::Ptr dclass;
-	Driver::Ptr dev;
-	try
-	{
-		dclass = plugin->driver(driver_name);
-		dev = dclass->open(device_path, driver_args);
-	}
-	catch (std::exception & e)
-	{
-		std::cerr << e.what() << std::endl;
-		return 1;
-	}
-
-	// Setup the Device Callback Data
-	app_data appdata;
-	appdata.dev = dev;
-	appdata.quiet = quiet;
-	appdata.device_path = device_path;
-	appdata.token_file = "";
-
-	if (vm.count("token-path"))
-		appdata.token_path = vm["token-path"].as<std::string>();
-
-	if (vm.count("token"))
-		appdata.token = vm["token"].as<std::string>();
-
-	// Allocate storage for transferred data
-	dive_data_t dive_data;
-
 	// Run the Transfer
-	transfer_callback_fn_t cb = NULL;
-	if (! quiet)
-		cb = & progress_bar;
+	rv = run_transfer(vm);
 
-	dive_data = dev->transfer(& device_info, cb, & appdata);
-	if (dive_data.size() > 0)
-	{
-		if (! quiet)
-			std::cout << "Transferred " << dive_data.size() << " new dives" << std::endl;
-	}
-	else
-		std::cout << "No new data to transfer" << std::endl;
+	// Cleanup
+	benthos_dc_registry_cleanup();
 
-	std::string token;
-
-	// Parse Dives
-	if (dive_data.size() > 0)
-	{
-		std::string outfile;
-		if (vm.count("output-file"))
-			outfile = vm["output-file"].as<std::string>();
-
-		parseDives(dev, dive_data, outfile, token, honly);
-		if (! quiet && ! outfile.empty())
-			std::cout << "Wrote UDDF dive data to " << outfile << std::endl;
-	}
-
-	// Store the new Transfer Token
-	fs::path tokenpath(appdata.token_file);
-	fs::path tokendir(tokenpath.parent_path());
-
-	if (! vm.count("no-store-token"))
-	{
-		try
-		{
-			if (! fs::exists(tokendir))
-				fs::create_directories(tokendir);
-
-
-			if (dive_data.size() > 0)
-			{
-				std::ofstream f(tokenpath.native());
-				f << token << std::endl;
-				f.close();
-
-				if (! quiet)
-					std::cout << "Stored token " << token << " to " << appdata.token_file << std::endl;
-			}
-		}
-		catch (std::exception & e)
-		{
-			std::cerr << "Failed to save transfer token to " << tokenpath.native() << std::cerr;
-			std::cerr << e.what() << std::endl;
-		}
-	}
-
-	// Success!
-	return 0;
+	// Exit
+	return rv;
 }

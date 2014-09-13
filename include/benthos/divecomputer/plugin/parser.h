@@ -42,6 +42,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <benthos/divecomputer/plugin/driver.h>
 
 /**
  * @brief Opaque Pointer to a Device parser Instance

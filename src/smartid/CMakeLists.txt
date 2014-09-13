@@ -2,7 +2,7 @@
 # CMake File for the Benthos Dive Computer Library (benthos_dc)
 #------------------------------------------------------------------------------
 #
-# Copyright (C) 2011 Asymworks, LLC.  All Rights Reserved.
+# Copyright (C) 2014 Asymworks, LLC.  All Rights Reserved.
 #
 # Developed by: Asymworks, LLC <info@asymworks.com>
 # 				 http://www.asymworks.com
@@ -31,17 +31,75 @@
 # WITH THE SOFTWARE.
 #
 
-# Build Smart Plugin
-if(WITH_SMART)
-  add_subdirectory(smart)
-endif(WITH_SMART)
+# Application Version Information
+set(SMARTID_MAJOR_VERSION 1)
+set(SMARTID_MINOR_VERSION 0)
+set(SMARTID_PATCH_VERSION 5)
+set(SMARTID_VERSION
+	${SMARTID_MAJOR_VERSION}.${SMARTID_MINOR_VERSION}.${SMARTID_PATCH_VERSION})
 
-# Build Smart-I Plugin
-if(WITH_SMARTI)
-  add_subdirectory(smarti)
-endif(WITH_SMARTI)
+set(SMARTID_VERSION_STRING "${SMARTID_VERSION}")
 
-# Build libdivecomputer Plugin
-if(WITH_LIBDC)
-  add_subdirectory(libdc)
-endif(WITH_LIBDC)
+# Application Name/Copyright Info
+set(SMARTID_APP_NAME "smartid")
+set(SMARTID_APP_TITLE "Smart-I Daemon")
+set(SMARTID_COPYRIGHT "Copyright (c) 2011-2014 Asymworks, LLC.  All Rights Reserved.")
+
+# Application Host Processor Info
+execute_process(COMMAND uname -m OUTPUT_VARIABLE SMARTID_MACHINE OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# Default Listening Port
+set(SMARTID_DEFAULT_PORT 6740)
+
+# C/C++ Source Files
+set(SMARTID_SRCS
+    smartid_cmd.c
+    smartid_conn.c
+    smartid_device.c
+    smartid_logging.c
+    smartid_main.c
+    smartid_server.c
+    $<TARGET_OBJECTS:common_irda>
+	$<TARGET_OBJECTS:common_util>
+)
+
+# Use C99
+add_definitions( -std=c99 )
+
+# Linux needs _XOPEN_SOURCE and POSIX 200809 defined
+if(BDC_OS_LINUX)
+add_definitions( -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=200809L )
+endif(BDC_OS_LINUX)
+
+# Find LibEvent
+find_package( Event REQUIRED )
+
+# Configure Header
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/smartid_version.h.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/smartid_version.h 
+    @ONLY)
+
+# Setup Include Directories
+include_directories(
+    ${CMAKE_CURRENT_BINARY_DIR}
+	${CMAKE_SOURCE_DIR}/include
+	${CMAKE_BINARY_DIR}/include
+	${EVENT_INCLUDE_DIRS}
+)
+
+# Build the Application
+add_executable(smartid
+	${SMARTID_SRCS}
+)
+
+# Link the Application
+target_link_libraries(smartid
+    ${EVENT_CORE_LIBRARIES}
+)
+
+# Install the Application
+install(
+    TARGETS smartid
+    DESTINATION sbin
+)

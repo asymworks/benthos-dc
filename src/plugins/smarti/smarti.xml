@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin name="benthosdc-smarti" library="smarti" version="1.0">
+	<driver name="smarti">
+		<description>Smart-I Client for Uwatec Smart Devices</description>
+		<interface>net</interface>
+		<parameters>
+			<parameter name="port" type="int" default="6740">Smart-I Protocol Server Port.  Default is 6740.</parameter>
+			<parameter name="chunk_size" type="int" default="4">IrDA transfer chunk size, between 2 and 32 bytes.  Default is 4.</parameter>
+			<parameter name="lsap" type="int" default="1">IrDA Link Service Access Point identifier.  Default is 1.</parameter>
+		</parameters>
+		<models manufacturer="Uwatec">
+			<model id="16">Smart Pro</model>
+			<model id="17">Galileo Sol</model>
+			<model id="18">Aladin Tec</model>
+			<model id="19">Aladin Tec 2G</model>
+			<model id="20">Smart Com</model>
+			<model id="24">Smart Tec</model>
+			<model id="28">Smart Z</model>
+		</models>
+	</driver>
+</plugin>

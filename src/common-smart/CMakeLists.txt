@@ -31,17 +31,8 @@
 # WITH THE SOFTWARE.
 #
 
-# Build Smart Plugin
-if(WITH_SMART)
-  add_subdirectory(smart)
-endif(WITH_SMART)
-
-# Build Smart-I Plugin
-if(WITH_SMARTI)
-  add_subdirectory(smarti)
-endif(WITH_SMARTI)
-
-# Build libdivecomputer Plugin
-if(WITH_LIBDC)
-  add_subdirectory(libdc)
-endif(WITH_LIBDC)
+# Build the Common Smart Module
+add_library(common_smart OBJECT
+    smart_extract.c
+	smart_parser.c
+)

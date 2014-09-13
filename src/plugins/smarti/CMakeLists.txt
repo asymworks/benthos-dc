@@ -31,17 +31,24 @@
 # WITH THE SOFTWARE.
 #
 
-# Build Smart Plugin
-if(WITH_SMART)
-  add_subdirectory(smart)
-endif(WITH_SMART)
+# Build the Smart-I Plugin
+add_library(smarti SHARED
+	benthosdc_smarti.c
+	smarti_client.c
+	smarti_driver.c
+	$<TARGET_OBJECTS:common_smart>
+	$<TARGET_OBJECTS:common_util>
+)
 
-# Build Smart-I Plugin
-if(WITH_SMARTI)
-  add_subdirectory(smarti)
-endif(WITH_SMARTI)
+# Link the Smart-I Plugin
+target_link_libraries(smarti
+)
 
-# Build libdivecomputer Plugin
-if(WITH_LIBDC)
-  add_subdirectory(libdc)
-endif(WITH_LIBDC)
+# Package the Smart-I Plugin
+install(TARGETS smarti
+	LIBRARY DESTINATION ${BENTHOS_DC_PLUGINDIR}
+	ARCHIVE DESTINATION ${BENTHOS_DC_SPLUGINDIR}
+)
+
+# Install Manifest
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/smarti.xml DESTINATION ${BENTHOS_DC_DATADIR}/plugins)

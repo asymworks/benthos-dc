@@ -2,7 +2,7 @@
 # CMake File for the Benthos Dive Computer Library (benthos_dc)
 #------------------------------------------------------------------------------
 #
-# Copyright (C) 2011 Asymworks, LLC.  All Rights Reserved.
+# Copyright (C) 2014 Asymworks, LLC.  All Rights Reserved.
 #
 # Developed by: Asymworks, LLC <info@asymworks.com>
 # 				 http://www.asymworks.com
@@ -31,17 +31,9 @@
 # WITH THE SOFTWARE.
 #
 
-# Build Smart Plugin
-if(WITH_SMART)
-  add_subdirectory(smart)
-endif(WITH_SMART)
-
-# Build Smart-I Plugin
-if(WITH_SMARTI)
-  add_subdirectory(smarti)
-endif(WITH_SMARTI)
-
-# Build libdivecomputer Plugin
-if(WITH_LIBDC)
-  add_subdirectory(libdc)
-endif(WITH_LIBDC)
+# Build the Common Utility Module
+add_library(common_util OBJECT
+	arglist.c
+	base64.c
+	unpack.c
+)

@@ -31,17 +31,65 @@
 # WITH THE SOFTWARE.
 #
 
-# Build Smart Plugin
-if(WITH_SMART)
-  add_subdirectory(smart)
-endif(WITH_SMART)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON) 
+set(Boost_USE_STATIC_RUNTIME OFF)
 
-# Build Smart-I Plugin
-if(WITH_SMARTI)
-  add_subdirectory(smarti)
-endif(WITH_SMARTI)
+# Boost Headers Required
+find_package( Boost 1.45 REQUIRED COMPONENTS filesystem regex system )
 
-# Build libdivecomputer Plugin
-if(WITH_LIBDC)
-  add_subdirectory(libdc)
-endif(WITH_LIBDC)
+# LibXML2 Required
+find_package( LibXml2 2.7 REQUIRED )
+
+# libiconv Required
+find_package( Iconv REQUIRED )
+
+# libiconv Defines
+if (${ICONV_SECOND_ARGUMENT_IS_CONST})
+    add_definitions( -DICONV_SECOND_ARGUMENT_IS_CONST )
+endif (${ICONV_SECOND_ARGUMENT_IS_CONST})
+
+# Include Paths
+include_directories(
+    ${Boost_INCLUDE_DIR}
+	${ICONV_INCLUDE_DIR}
+	${LIBXML2_INCLUDE_DIR}
+)
+
+# Configure Files
+configure_file(
+	${CMAKE_SOURCE_DIR}/include/benthos/divecomputer/config.h.in 
+	${CMAKE_BINARY_DIR}/include/benthos/divecomputer/config.h 
+	@ONLY
+)
+
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/benthos-dc.pc.in
+	${CMAKE_CURRENT_BINARY_DIR}/benthos-dc.pc
+	@ONLY
+)
+
+# Build the Benthos Dive Computer Library
+add_library(benthos-dc SHARED
+	manifest.cpp
+	registry.cpp
+)
+
+# Link the Benthos Dive Computer Library
+target_link_libraries(benthos-dc
+    ${Boost_LIBRARIES}
+	${LIBXML2_LIBRARIES}
+	${ICONV_LIBRARIES}
+)
+
+# Package the Benthos Dive Computer Library
+install(TARGETS benthos-dc
+	LIBRARY DESTINATION ${BENTHOS_DC_LIBDIR}
+	ARCHIVE DESTINATION ${BENTHOS_DC_LIBDIR}/static
+)
+
+# Install Headers
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include
+	PATTERN "*.in" EXCLUDE)
+install(FILES ${CMAKE_BINARY_DIR}/include/benthos/divecomputer/config.h DESTINATION include/benthos/divecomputer)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/benthos-dc.pc DESTINATION lib/pkgconfig)

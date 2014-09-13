@@ -2,7 +2,7 @@
 # CMake File for the Benthos Dive Computer Library (benthos_dc)
 #------------------------------------------------------------------------------
 #
-# Copyright (C) 2011 Asymworks, LLC.  All Rights Reserved.
+# Copyright (C) 2014 Asymworks, LLC.  All Rights Reserved.
 #
 # Developed by: Asymworks, LLC <info@asymworks.com>
 # 				 http://www.asymworks.com
@@ -31,9 +31,6 @@
 # WITH THE SOFTWARE.
 #
 
-# Enable Warnings, C++0x, etc.
-add_definitions( -std=c++0x -Wall -g )
-
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON) 
 set(Boost_USE_STATIC_RUNTIME OFF)
@@ -53,6 +50,7 @@ include_directories(
 # Build Transfer Application
 add_executable( benthos-xfr 
 	main.cpp
+	output_uddf.cpp
 )
 
 target_link_libraries( benthos-xfr 

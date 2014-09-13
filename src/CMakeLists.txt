@@ -38,12 +38,35 @@ include_directories(
 	${CMAKE_BINARY_DIR}/include
 )
 
-# Build the common objects and core
-add_subdirectory(common)
-add_subdirectory(core)
+# Build the Common Utility module
+add_subdirectory(common-util)
 
-# Build the plugins
-add_subdirectory(plugins)
+# Build the Smart Device Support module
+if(WITH_SMART OR WITH_SMARTI)
+  add_subdirectory(common-smart)
+endif(WITH_SMART OR WITH_SMARTI)
+
+# Build the IrDA module
+if(WITH_IRDA)
+  add_subdirectory(common-irda)
+endif(WITH_IRDA)
+
+# Build the Library
+if(BUILD_SHARED OR BUILD_STATIC)
+  add_subdirectory(library)
+endif(BUILD_SHARED OR BUILD_STATIC)
+
+# Build the Plugins
+if(BUILD_PLUGINS)
+  add_subdirectory(plugins)
+endif(BUILD_PLUGINS)
+
+# Build the Smart-I Daemon
+if(BUILD_SMARTID)
+  add_subdirectory(smartid)
+endif(BUILD_SMARTID)
 
 # Build the transfer application
-add_subdirectory(transferapp)
+if(BUILD_TRANSFER_APP)
+  add_subdirectory(transferapp)
+endif(BUILD_TRANSFER_APP)

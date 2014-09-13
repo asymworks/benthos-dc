@@ -58,6 +58,8 @@ extern "C" {
 #define DRIVER_ERR_UNSUPPORTED	-7		///< Unsupported Device or Operation
 #define DRIVER_ERR_CANCELLED	-8		///< Operation Cancelled
 #define DRIVER_ERR_PARSER		-9		///< Parser Error
+#define DRIVER_ERR_BAD_DEVPATH	-10		///< Invalid Device Path
+#define DRIVER_ERR_INTERNAL		-11		///< Internal Driver Error
 /*@}*/
 
 /**
