@@ -68,7 +68,7 @@ set(SMARTID_SRCS
 
 # Setup SysV Init Script
 configure_file(
-    ${CMAKE_SOURCE_DIR}/dist/sysvinit-smartid.in 
+    ${CMAKE_SOURCE_DIR}/dist/smartid/sysvinit-smartid.in 
     ${CMAKE_CURRENT_BINARY_DIR}/sysvinit-smartid 
     @ONLY)
 
@@ -112,5 +112,6 @@ install(
 install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/sysvinit-smartid
     RENAME ${SMARTID_APP_NAME}
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE 
     DESTINATION ${BENTHOS_DC_SYSCONFDIR}/init.d 
 )
