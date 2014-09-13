@@ -669,11 +669,13 @@ int smart_parser_parse_header(parser_handle_t abstract, const void * buffer, uin
 static uint8_t smart_identify(const unsigned char * data, uint32_t size)
 {
 	uint8_t count = 0;
-	uint8_t i, j;
-	for (uint8_t i = 0; i < ((size > NBYTES) ? NBYTES : size); ++i)
+	uint8_t i;
+	uint8_t j;
+
+	for (i = 0; i < ((size > NBYTES) ? NBYTES : size); ++i)
 	{
 		uint8_t value = data[i];
-		for (uint8_t j = 0; j < NBITS; ++j)
+		for (j = 0; j < NBITS; ++j)
 		{
 			uint8_t mask = (1 << (NBITS - 1 - j));
 			if ((value & mask) == 0)

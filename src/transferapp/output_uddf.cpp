@@ -139,7 +139,6 @@ int uddf_prolog(output_fmt_data_t s)
 	output_fmt_data_t cb_data = static_cast<output_fmt_data_t>(s);
 	uddf_fmt_data *	fmt_data;
 
-	time_t st;
 	char buf[256];
 
 	if (! cb_data || (cb_data->magic != UDDF_FMT_MAGIC))
@@ -234,8 +233,6 @@ int uddf_init_formatter(output_fmt_data_t s)
 {
 	uddf_fmt_data * fmt_data;
 	xmlNode * generator;
-	xmlNode * gasdef;
-	xmlNode * profiles;
 
 	char buf[255];
 	time_t t = time(NULL);
@@ -268,6 +265,7 @@ int uddf_init_formatter(output_fmt_data_t s)
 	xmlNewProp(fmt_data->root, BAD_CAST("version"), BAD_CAST("3.0.0"));
 
 	/* Initialize Generator Data */
+	generator = xmlNewChild(fmt_data->root, 0, BAD_CAST "generator", 0);
 	xmlNewChild(generator, 0, BAD_CAST("name"), BAD_CAST("benthos-dc"));
 	xmlNewChild(generator, 0, BAD_CAST("version"), BAD_CAST(BENTHOS_DC_VERSION_STRING));
 

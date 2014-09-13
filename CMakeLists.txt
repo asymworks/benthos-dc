@@ -46,6 +46,9 @@ set(CMAKE_MODULE_PATH
 	${CMAKE_SOURCE_DIR}/cmake/modules/
 )
 
+# All Warnings
+add_definitions( -Wall )
+
 # Feature Summary
 include(FeatureSummary)
 
@@ -66,6 +69,11 @@ else(WIN32)
     set(BDC_OS_LINUX TRUE)
   endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif(WIN32)
+
+# Linux needs _XOPEN_SOURCE and POSIX 200809 defined
+if(BDC_OS_LINUX)
+  add_definitions( -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=200809L )
+endif(BDC_OS_LINUX)
 
 # Global Compilation Options
 option(BUILD_SHARED         "Build benthos-dc shared library"        ON)

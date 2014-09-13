@@ -588,8 +588,6 @@ int benthos_dc_registry_plugin_info(const char * name, const plugin_info_t ** in
 
 int benthos_dc_registry_init(void)
 {
-	int rv;
-
 	if (g_registry)
 		return 0;
 

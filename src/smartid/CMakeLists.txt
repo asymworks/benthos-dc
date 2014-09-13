@@ -66,11 +66,6 @@ set(SMARTID_SRCS
 # Use C99
 add_definitions( -std=c99 )
 
-# Linux needs _XOPEN_SOURCE and POSIX 200809 defined
-if(BDC_OS_LINUX)
-add_definitions( -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=200809L )
-endif(BDC_OS_LINUX)
-
 # Find LibEvent
 find_package( Event REQUIRED )
 

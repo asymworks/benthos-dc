@@ -392,7 +392,6 @@ int smarti_driver_transfer(dev_handle_t abstract, void ** buffer, uint32_t * siz
 	int free_token = 0;
 	uint32_t token = 0;
 	size_t bsize;
-	void * data;
 
 	/* Check Magic Number */
 	if (! CHECK_DEV(dev) || ! buffer || ! size)
