@@ -67,10 +67,13 @@ typedef std::vector<uint8_t>					dive_buffer_t;
 typedef std::pair<dive_buffer_t, std::string>	dive_entry_t;
 typedef std::list<dive_entry_t>					dive_data_t;
 
-void list_drivers(void)
+int list_drivers(void)
 {
+	int rv;
+	int err = 0;
 	driver_iterator_t it;
 	const driver_info_t * di;
+	const driver_interface_t * drv;
 
 	std::cout << "Registered Device Drivers" << std::endl;
 	std::cout << std::endl;
@@ -80,9 +83,79 @@ void list_drivers(void)
 	it = benthos_dc_registry_drivers();
 	while ((di = benthos_dc_driver_iterator_info(it)) != 0)
 	{
-		std::cout << boost::format("%-20s %-12s %-40s\n") % di->plugin->plugin_name % di->driver_name % di->driver_desc;
+		/* Check that the Driver Loads */
+		rv = benthos_dc_registry_load(di->driver_name, & drv);
+		if (rv != 0)
+		{
+			err = 1;
+			std::cout << boost::format("! %-18s %-12s %-40s\n") % di->plugin->plugin_name % di->driver_name % di->driver_desc;
+		}
+		else
+		{
+			std::cout << boost::format("  %-18s %-12s %-40s\n") % di->plugin->plugin_name % di->driver_name % di->driver_desc;
+		}
+
 		benthos_dc_driver_iterator_next(it);
 	}
+
+	if (err)
+	{
+		std::cout << std::endl;
+		std::cout << "Some drivers (marked with !) failed to load." << std::endl;
+		std::cout << "Run benthos-xfr --test to see detailed information" << std::endl;
+	}
+
+	return err;
+}
+
+int test_drivers(void)
+{
+	int rv;
+	int count = 0;
+	int err = 0;
+	driver_iterator_t it;
+	const driver_info_t * di;
+	const driver_interface_t * drv;
+
+	it = benthos_dc_registry_drivers();
+	while ((di = benthos_dc_driver_iterator_info(it)) != 0)
+	{
+		/* Increment Driver Count */
+		++count;
+
+		/* Check that the Driver Loads */
+		rv = benthos_dc_registry_load(di->driver_name, & drv);
+		if (rv != 0)
+		{
+			err = 1;
+			std::cerr << "Failed to load driver '" << di->driver_name << "' from plugin '" << di->plugin->plugin_name << std::endl;
+			std::cerr << "  Plugin Library: " << di->plugin->plugin_library << std::endl;
+			std::cerr << "  benthos_dc_registry_load() returned " << rv << ": ";
+
+			if (rv < 0)
+				std::cerr << benthos_dc_registry_strerror(rv);
+			else
+				std::cerr << strerror(rv);
+
+			std::cerr << std::endl;
+
+		}
+
+		benthos_dc_driver_iterator_next(it);
+	}
+
+	if (err)
+		return err;
+
+	if (! count)
+	{
+		std::cerr << "No plugins are registered with Benthos" << std::endl;
+		return 2;
+	}
+
+	std::cout << "Tested " << count << " drivers: passed" << std::endl;
+
+	return 0;
 }
 
 std::string token_path(const std::string & driver, uint32_t serial, const std::string & path)
@@ -699,6 +772,7 @@ int main(int argc, char ** argv)
 	generic.add_options()
 		("help,?",		"Display this help message")
 		("list",		"Display all installed drivers and exit")
+		("test,T",      "Test installed plugins and exit")
 		("quiet,q", 	"Suppress status messages")
 		("version,v",	"Display version information and exit")
 	;
@@ -777,6 +851,14 @@ int main(int argc, char ** argv)
 		list_drivers();
 		benthos_dc_registry_cleanup();
 		return 0;
+	}
+
+	// Test Plugins
+	if (vm.count("test"))
+	{
+		rv = test_drivers();
+		benthos_dc_registry_cleanup();
+		return rv;
 	}
 
 	// Run the Transfer
