@@ -32,7 +32,7 @@
 #define SMARTI_CMD_H_
 
 /**
- * @file smarti_cmd.h
+ * @file smartid_cmd.h
  * @brief Smart-I Daemon Commands
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  *

@@ -29,7 +29,7 @@
  */
 
 /**
- * @file smarti_conn.c
+ * @file smartid_conn.c
  * @brief Smart-I Daemon Connection Handling
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */

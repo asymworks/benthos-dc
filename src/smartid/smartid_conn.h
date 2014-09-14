@@ -32,7 +32,7 @@
 #define SMARTI_CONN_H_
 
 /**
- * @file smarti_conn.h
+ * @file smartid_conn.h
  * @brief Smart-I Daemon Connection
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  *

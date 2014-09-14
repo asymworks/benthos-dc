@@ -24,7 +24,7 @@
 #define UNPACK_H_
 
 /**
- * @file src/common/unpack.h
+ * @file include/benthos/divecomputer/unpack.h
  * @brief Common functions to unpack data
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */
@@ -35,20 +35,29 @@ extern "C" {
 
 #include <stdint.h>
 
-uint32_t uint32_le(const unsigned char * buffer, uint32_t offset);
-uint32_t uint32_be(const unsigned char * buffer, uint32_t offset);
-int32_t int32_le(const unsigned char * buffer, uint32_t offset);
-int32_t int32_be(const unsigned char * buffer, uint32_t offset);
+/**@{
+ * @name Integer Unpacking Functions
+ * @param[in] buffer Data Buffer
+ * @param[in] offset Data Offset
+ *
+ * Unpacks integers from a data buffer in either little-endian or big-endian
+ * format, and for varying word sizes.
+ */
+uint32_t uint32_le(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack unsigned 32-bit as little-endian
+uint32_t uint32_be(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack unsigned 32-bit as big-endian
+int32_t int32_le(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack signed 32-bit as little-endian
+int32_t int32_be(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack signed 32-bit as big-endian
 
-uint32_t uint24_le(const unsigned char * buffer, uint32_t offset);
-uint32_t uint24_be(const unsigned char * buffer, uint32_t offset);
-int32_t int24_le(const unsigned char * buffer, uint32_t offset);
-int32_t int24_be(const unsigned char * buffer, uint32_t offset);
+uint32_t uint24_le(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack unsigned 24-bit as little-endian
+uint32_t uint24_be(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack unsigned 24-bit as big-endian
+int32_t int24_le(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack signed 24-bit as little-endian
+int32_t int24_be(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack signed 24-bit as big-endian
 
-uint16_t uint16_le(const unsigned char * buffer, uint32_t offset);
-uint16_t uint16_be(const unsigned char * buffer, uint32_t offset);
-int16_t int16_le(const unsigned char * buffer, uint32_t offset);
-int16_t int16_be(const unsigned char * buffer, uint32_t offset);
+uint16_t uint16_le(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack unsigned 16-bit as little-endian
+uint16_t uint16_be(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack unsigned 16-bit as big-endian
+int16_t int16_le(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack signed 16-bit as little-endian
+int16_t int16_be(const unsigned char * buffer, uint32_t offset);	///< @brief Unpack signed 16-bit as big-endian
+/*@}*/
 
 #ifdef __cplusplus
 }

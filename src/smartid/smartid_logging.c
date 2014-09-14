@@ -29,7 +29,7 @@
  */
 
 /**
- * @file src/smartid/logging.c
+ * @file smartid_logging.c
  * @brief Smart-I Daemon Logging Utilities
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */

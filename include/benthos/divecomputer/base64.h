@@ -24,7 +24,7 @@
 #define BASE64_H_
 
 /**
- * @file src/common/base64.h
+ * @file include/benthos/divecomputer/base64.h
  * @brief Base64 String Functions
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */
@@ -35,9 +35,9 @@ extern "C" {
 
 /**
  * @brief Encode a string in Base 64
- * @param[in] Input Data to Encode
- * @param[in] Input Data Length
- * @param[out] Output Data Length
+ * @param[in] data Input Data to Encode
+ * @param[in] in_length Input Data Length
+ * @param[out] out_length Output Data Length
  * @return Pointer to Base 64 string
  *
  * Encodes the given string in Base 64.  The given length parameter must be set
@@ -50,9 +50,9 @@ char * base64_encode(const unsigned char * data, size_t in_length, size_t * out_
 
 /**
  * @brief Decode a string from Base 64
- * @param[in] Input Data to Decode
- * @param[in] Input Data Length
- * @param[out] Output Data Length
+ * @param[in] data Input Data to Decode
+ * @param[in] in_length Input Data Length
+ * @param[out] out_length Output Data Length
  * @return Pointer to Decoded Data
  *
  * Decodes the given string from Base 64.  If the string cannot be encoded,

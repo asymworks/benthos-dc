@@ -32,7 +32,7 @@
 #define BENTHOS_DC_OUTPUT_FMT_HPP_
 
 /**
- * @file src/transferapp/output_fmt.hpp
+ * @file src/transferapp/output_fmt.h
  * @brief Dive Output Formatter Common Definitions
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */

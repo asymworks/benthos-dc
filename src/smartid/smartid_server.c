@@ -29,7 +29,7 @@
  */
 
 /**
- * @file src/smartid/smartid_server.c
+ * @file smartid_server.c
  * @brief Smart-I Daemon Control Utilities
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */

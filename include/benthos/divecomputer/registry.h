@@ -48,19 +48,19 @@ extern "C" {
 /**@{
  * @brief Registry Error Codes
  */
-#define REGISTRY_ERR_NOTINIT		-1
-#define REGISTRY_ERR_NOTFOUND		-2
-#define REGISTRY_ERR_NOTDIR			-3
-#define REGISTRY_ERR_NOTFILE		-4
-#define REGISTRY_ERR_EXISTS			-5
-#define REGISTRY_ERR_INVALID		-6
-#define REGISTRY_ERR_AMBIGUOUS		-7
-#define REGISTRY_ERR_DLOPEN			-8
-#define REGISTRY_ERR_DLSYM_LOAD		-9
-#define REGISTRY_ERR_DLSYM_UNLOAD	-10
-#define REGISTRY_ERR_DLSYM_DRIVER	-11
-#define REGISTRY_ERR_PLUGIN_LOAD	-12
-#define REGISTRY_ERR_NOTINPLUGIN	-13
+#define REGISTRY_ERR_NOTINIT		-1		///< Registry Not Initialized
+#define REGISTRY_ERR_NOTFOUND		-2		///< Plugin, Driver, or Path Not Found
+#define REGISTRY_ERR_NOTDIR			-3		///< Path is not a Directory
+#define REGISTRY_ERR_NOTFILE		-4		///< Path is not a File
+#define REGISTRY_ERR_EXISTS			-5		///< Driver Already Registered
+#define REGISTRY_ERR_INVALID		-6		///< Invalid Argument
+#define REGISTRY_ERR_AMBIGUOUS		-7		///< Ambiguous Driver Name
+#define REGISTRY_ERR_DLOPEN			-8		///< Failed to Open Shared Library
+#define REGISTRY_ERR_DLSYM_LOAD		-9		///< Library does not contain plugin_load
+#define REGISTRY_ERR_DLSYM_UNLOAD	-10		///< Library does not contain plugin_unload
+#define REGISTRY_ERR_DLSYM_DRIVER	-11		///< Library does not contain plugin_load_driver
+#define REGISTRY_ERR_PLUGIN_LOAD	-12		///< Failed to load Plugin for Manifest
+#define REGISTRY_ERR_NOTINPLUGIN	-13		///< Driver is not provided by Plugin
 /*@}*/
 
 /**
@@ -82,29 +82,29 @@ int benthos_dc_registry_init(void);
 void benthos_dc_registry_cleanup(void);
 
 //! @return Error String for an Error Code
-const char * benthos_dc_registry_strerror(int);
+const char * benthos_dc_registry_strerror(int errcode);
 
 /**
  * @brief Add a Manifest File to the Registry
- * @param[in] Manifest File
+ * @param[in] path Manifest File
  * @return Zero on Success, Non-Zero on Failure
  *
  * Adds a single manifest file to the registry.
  */
-int benthos_dc_registry_add_manifest(const char *);
+int benthos_dc_registry_add_manifest(const char * path);
 
 /**
  * @brief Add a Plugin File to the Registry
- * @param[in] Plugin File
+ * @param[in] path Plugin File
  * @return Zero on Success, Non-Zero on Failure
  *
  * Adds a single plugin library file to the registry.
  */
-int benthos_dc_registry_add_plugin(const char *);
+int benthos_dc_registry_add_plugin(const char * path);
 
 /**
  * @brief Add a Manifest Path to the Registry
- * @param[in] Manifest Path
+ * @param[in] path Manifest Path
  * @return Zero on Success, Non-Zero on Failure
  *
  * Adds a directory to the registry which will be scanned for manifest
@@ -113,11 +113,11 @@ int benthos_dc_registry_add_plugin(const char *);
  * the given directory to be scanned and all manifests found to be registered
  * with the registry.
  */
-int benthos_dc_registry_add_manifest_path(const char *);
+int benthos_dc_registry_add_manifest_path(const char * path);
 
 /**
  * @brief Add a Plugin Path to the Registry
- * @param[in] Plugin Path
+ * @param[in] path Plugin Path
  * @return Zero on Success, Non-Zero on Failure
  *
  * Adds a directory to the registry which will be scanned for plugin library
@@ -126,7 +126,7 @@ int benthos_dc_registry_add_manifest_path(const char *);
  * the given directory to be scanned and all plugins found to be registered
  * with the registry.
  */
-int benthos_dc_registry_add_plugin_path(const char *);
+int benthos_dc_registry_add_plugin_path(const char * path);
 
 /**
  * @brief Return an Iterator for all Registered Drivers
@@ -139,16 +139,16 @@ driver_iterator_t benthos_dc_registry_drivers(void);
 
 /**
  * @brief Find Plugin Information by Name
- * @param[in] Plugin Name
- * @param[out] Plugin Information
+ * @param[in] plugin Plugin Name
+ * @param[out] pi Plugin Information
  * @return Zero on Success, Non-Zero on Failure
  */
-int benthos_dc_registry_plugin_info(const char *, const plugin_info_t **);
+int benthos_dc_registry_plugin_info(const char * plugin, const plugin_info_t ** pi);
 
 /**
  * @brief Find Driver Information by Name
- * @param[in] Driver Name
- * @param[out] Driver Information
+ * @param[in] driver Driver Name
+ * @param[out] di Driver Information
  * @return Zero on Success, Non-Zero on Failure
  *
  * The driver name may be given either as a single name or as a dotted path
@@ -159,12 +159,12 @@ int benthos_dc_registry_plugin_info(const char *, const plugin_info_t **);
  * does not have the plugin specified, the function will return
  * REGISTRY_ERR_AMBIGUOUS.
  */
-int benthos_dc_registry_driver_info(const char *, const driver_info_t **);
+int benthos_dc_registry_driver_info(const char * driver, const driver_info_t ** di);
 
 /**
  * @brief Load a Driver Function Table
- * @param[in] Driver Name
- * @param[out] Driver Table
+ * @param[in] driver Driver Name
+ * @param[out] intf Driver Table
  * @return Zero on Success, Non-Zero on Failure
  *
  * Loads the specified driver function table.  This will load the plugin
@@ -180,7 +180,7 @@ int benthos_dc_registry_driver_info(const char *, const driver_info_t **);
  * does not have the plugin specified, the function will return
  * REGISTRY_ERR_AMBIGUOUS.
  */
-int benthos_dc_registry_load(const char *, const driver_interface_t **);
+int benthos_dc_registry_load(const char * driver, const driver_interface_t ** intf);
 
 #ifdef __cplusplus
 }

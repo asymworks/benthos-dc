@@ -32,7 +32,7 @@
 #define BENTHOS_DC_OUTPUT_UDDF_HPP_
 
 /**
- * @file src/transferapp/output_uddf.hpp
+ * @file src/transferapp/output_uddf.h
  * @brief Universal Dive Data Format Output Formatter
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  */

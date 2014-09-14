@@ -32,7 +32,7 @@
 #define SMARTI_SERVER_H_
 
 /**
- * @file smarti_server.h
+ * @file smartid_server.h
  * @brief Smart-I Daemon Server Control
  * @author Jonathan Krauss <jkrauss@asymworks.com>
  *
