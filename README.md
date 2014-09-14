@@ -31,13 +31,11 @@ Plugin/Device Support
 
 Benthos currently includes the following plugins:
 
-| Plugin | Description                                                        | Supported Platforms  |
-|--------|--------------------------------------------------------------------|----------------------|
-| smart  | Interfaces to [ScubaPro/Uwatec][uwatec] Smart devices using IrDA   | Linux, Windows       |
-| smarti | Interfaces to [ScubaPro/Uwatec][uwatec] Smart devices on a remote
-           computer running the Smart-I protocol (see below)                  | Linux, Windows, OS X |
-| libdc  | Wrapper around [libdivecomputer][libdc] which supports all devices
-           which libdivecomputer supports natively                            | Linux, Windows, OS X |
+| Plugin | Description                                                                                                         | Supported Platforms  |
+|--------|---------------------------------------------------------------------------------------------------------------------|----------------------|
+| smart  | Interfaces to [ScubaPro/Uwatec][uwatec] Smart devices using IrDA                                                    | Linux, Windows       |
+| smarti | Interfaces to [ScubaPro/Uwatec][uwatec] Smart devices on a remote computer running the Smart-I protocol (see below) | Linux, Windows, OS X |
+| libdc  | Wrapper around [libdivecomputer][libdc] which supports all devices which libdivecomputer supports natively          | Linux, Windows, OS X |
            
 Compiling and Installing Benthos-DC
 ===================================
@@ -57,19 +55,17 @@ is compiled.  They are specified in typical CMake option format
 	-D<OPTION>=[ON|OFF]
 	
 	
-| Option             | Description                                    | Default             |
-|--------------------|------------------------------------------------|---------------------|
-| BUILD_SHARED       | Build the shared benthos dive computer library | ON                  |
-| BUILD_STATIC       | Build the static benthos dive computer library | (not implemented)   |
-| BUILD_PLUGINS      | Build the plugin shared libraries              | ON                  |
-| BUILD_SMARTID      | Build the Smart-I protocol daemon              | OFF                 |
-| BUILD_TRANSFER_APP | Build the benthos-xfr transfer application     | ON                  |
-| WITH_IRDA          | Include support for IrDA devices               | Linux, Windows: ON \  
-                                                                        OS X: OFF           |
-| WITH_SMART         | Build the `smart` plugin                       | Linux, Windows: ON \  
-                                                                        OS X: OFF           |
-| WITH_SMARTI        | Build the `smarti` plugin                      | ON                  |
-| WITH_LIBDC         | Build the `libdc` plugin                       | OFF                 |
+| Option             | Description                                    | Default                       |
+|--------------------|------------------------------------------------|-------------------------------|
+| BUILD_SHARED       | Build the shared benthos dive computer library | ON                            |
+| BUILD_STATIC       | Build the static benthos dive computer library | (not implemented)             |
+| BUILD_PLUGINS      | Build the plugin shared libraries              | ON                            |
+| BUILD_SMARTID      | Build the Smart-I protocol daemon              | OFF                           |
+| BUILD_TRANSFER_APP | Build the benthos-xfr transfer application     | ON                            |
+| WITH_IRDA          | Include support for IrDA devices               | Linux, Windows: ON, OS X: OFF |
+| WITH_SMART         | Build the `smart` plugin                       | Linux, Windows: ON, OS X: OFF |
+| WITH_SMARTI        | Build the `smarti` plugin                      | ON                            |
+| WITH_LIBDC         | Build the `libdc` plugin                       | OFF                           |
 
 Transfer Application
 ====================
