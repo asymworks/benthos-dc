@@ -83,6 +83,17 @@ be specified.
 
 	benthos-xfr -d smarti smarti-server.local
 	
+Benthos uses "tokens" to determine which dives to transfer from a device;
+namely all dives which follow the token.  The benthos-xfr application stores
+the token from the most recently downloaded dive so that the next time it is
+run, only new dives are transferred.  This behavior can be overridden on the
+command line to either manually specify a token (`-t [TOKEN]`) or to prevent
+storing the new token (`-U`).
+
+By default benthos-xfr transfers all data including all time/depth/temperature
+points recorded by the device.  To transfer only dive header information, pass 
+`-h` to benthos-xfr.
+
 Options may be passed to change the driver behavior.  Driver options are
 colon-delimited name-value lists of the form
 
