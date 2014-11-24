@@ -58,6 +58,7 @@
 #include <boost/program_options.hpp>
 
 #include "output_fmt.h"
+#include "output_csv.h"
 #include "output_uddf.h"
 
 namespace fs = boost::filesystem;
@@ -496,6 +497,16 @@ int run_parser(const po::variables_map & vm, const driver_interface_t * drv, dev
 		if (rv != 0)
 		{
 			std::cerr << "Failed to initialize UDDF Formatter: " << strerror(rv) << std::endl;
+			free(fmt_data);
+			return rv;
+		}
+	}
+	else if (format == "csv")
+	{
+		rv = csv_init_formatter(fmt_data);
+		if (rv != 0)
+		{
+			std::cerr << "Failed to initialize CSV Formatter: " << strerror(rv) << std::endl;
 			free(fmt_data);
 			return rv;
 		}

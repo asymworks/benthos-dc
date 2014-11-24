@@ -55,6 +55,7 @@ include_directories(
 # Build Transfer Application
 add_executable( benthos-xfr 
 	main.cpp
+	output_csv.cpp
 	output_uddf.cpp
 )
 
