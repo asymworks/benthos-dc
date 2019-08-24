@@ -3,7 +3,7 @@ require "formula"
 class BenthosDc < Formula
   homepage "https://asymworks.github.com/benthos-dc"
   url "https://github.com/asymworks/benthos-dc/archive/v0.4.2.tar.gz"
-  sha1 "fcb5a46951cb4ead3a1191fb2193e4ca132fc07e"
+  sha256 "6adec9170b5c592bb1fb429acd8b6bb7c994364ea790721bd03182d08d44a7b3"
 
   head "https://github.com/asymworks/benthos-dc.git"
   
