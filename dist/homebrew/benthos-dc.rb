@@ -2,8 +2,8 @@ require "formula"
 
 class BenthosDc < Formula
   homepage "https://asymworks.github.com/benthos-dc"
-  url "https://github.com/asymworks/benthos-dc/archive/v0.4.1.tar.gz"
-  sha1 "aeaf6ff4abc13377ec9197111f9b5efebbcce929"
+  url "https://github.com/asymworks/benthos-dc/archive/v0.4.2.tar.gz"
+  sha1 "fcb5a46951cb4ead3a1191fb2193e4ca132fc07e"
 
   head "https://github.com/asymworks/benthos-dc.git"
   
