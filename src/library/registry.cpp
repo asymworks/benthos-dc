@@ -526,7 +526,8 @@ int benthos_dc_registry_driver_info(const char * name, const driver_info_t ** in
 			return REGISTRY_ERR_AMBIGUOUS;
 		}
 
-		ret = found;
+		if (! ret)
+			ret = found;
 	}
 
 	/* Return Driver Info */
