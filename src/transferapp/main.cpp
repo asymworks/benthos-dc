@@ -761,7 +761,7 @@ int run_transfer(const po::variables_map & vm)
 		}
 		catch (std::exception & e)
 		{
-			std::cerr << "Failed to save transfer token to " << tokenpath.native() << std::cerr;
+			std::cerr << "Failed to save transfer token to " << tokenpath.native() << std::endl;
 			std::cerr << e.what() << std::endl;
 		}
 	}
