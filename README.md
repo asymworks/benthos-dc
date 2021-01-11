@@ -117,6 +117,10 @@ such as a [Raspberry Pi][rpi] running the standard Linux IrDA stack.  The
 setup using a Raspberry Pi, running Raspbian with 3.12.22 kernel and an
 MCS7780 IrDA dongle has been tested and confirmed to work.
 
+__Important Note__: IrDA support was dropped from the Linux kernel in 4.17
+so the latest distributions supported by Smart-I on a Raspberry Pi are Alpine
+3.8 and Raspbian Stretch.
+
 The Smart-I daemon includes a System V init file so it may be started as
 any normal daemon:
 
